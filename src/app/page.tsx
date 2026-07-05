@@ -1,65 +1,125 @@
-import Image from "next/image";
+import Link from "next/link";
+import { HeroArt } from "@/components/HeroArt";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { TOOLS } from "@/lib/tools/registry";
+import type { ToolCategory } from "@/lib/tools/types";
+
+const CATEGORY_LABELS: Record<ToolCategory, string> = {
+  organize: "Organize",
+  optimize: "Optimize",
+  convert: "Convert",
+  edit: "Edit & Sign",
+  security: "Security",
+};
+
+// One accent per category — used for the card dot and hover ring.
+const CATEGORY_DOT: Record<ToolCategory, string> = {
+  organize: "bg-sky-500",
+  edit: "bg-amber-500",
+  convert: "bg-emerald-500",
+  optimize: "bg-orange-500",
+  security: "bg-slate-500",
+};
+
+const CATEGORY_ORDER: ToolCategory[] = [
+  "organize",
+  "edit",
+  "convert",
+  "optimize",
+  "security",
+];
+
+const WEBSITE_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  description:
+    "Free online PDF tools that respect your privacy — most run entirely in your browser without uploading files.",
+};
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="mx-auto w-full max-w-5xl px-6 py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSONLD) }}
+      />
+      <section className="mb-16 flex items-center justify-between gap-10">
+        <div className="max-w-2xl">
+          <p className="mb-4 text-sm font-semibold tracking-wide text-red-600 dark:text-red-400">
+            Free · Private · No sign-up needed
           </p>
+          <h1 className="text-5xl font-bold tracking-tight text-balance sm:text-6xl">
+            Every PDF tool.
+            <br />
+            <span className="text-zinc-400 dark:text-zinc-500">
+              Your files stay yours.
+            </span>
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-zinc-500">
+            Merge, split, compress, convert, sign and edit PDFs. Most tools run
+            entirely in your browser — nothing is uploaded, ever.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-2.5 text-sm">
+            <span className="rounded-full border border-zinc-200 px-3.5 py-1.5 text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+              {TOOLS.length} tools, all free
+            </span>
+            <span className="rounded-full border border-zinc-200 px-3.5 py-1.5 text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+              <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500" />
+              {TOOLS.filter((t) => t.runtime === "client").length} run fully
+              in-browser
+            </span>
+            <span className="rounded-full border border-zinc-200 px-3.5 py-1.5 text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+              Server files auto-delete in 1 hour
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        <HeroArt />
+      </section>
+
+      {CATEGORY_ORDER.map((category) => {
+        const tools = TOOLS.filter((t) => t.category === category);
+        if (tools.length === 0) return null;
+        return (
+          <section key={category} className="mb-12">
+            <div className="mb-4 flex items-baseline gap-3">
+              <h2 className="text-lg font-semibold tracking-tight">
+                {CATEGORY_LABELS[category]}
+              </h2>
+              <span className="text-sm text-zinc-400">{tools.length}</span>
+              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {tools.map((tool) => (
+                <Link
+                  key={tool.id}
+                  href={`/tools/${tool.id}`}
+                  className="group relative rounded-lg border border-zinc-200 bg-white p-4 transition-all duration-150 hover:border-zinc-300 hover:shadow-[0_2px_12px_rgba(0,0,0,0.06)] focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-zinc-700"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${CATEGORY_DOT[category]}`}
+                    />
+                    <h3 className="font-semibold tracking-tight group-hover:text-red-600 dark:group-hover:text-red-400">
+                      {tool.name}
+                    </h3>
+                    <span
+                      aria-hidden
+                      className="ml-auto -translate-x-1 text-zinc-300 opacity-0 transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 dark:text-zinc-600"
+                    >
+                      →
+                    </span>
+                  </div>
+                  <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-500">
+                    {tool.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </main>
   );
 }

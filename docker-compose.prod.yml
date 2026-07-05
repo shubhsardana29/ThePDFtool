@@ -1,0 +1,79 @@
+# Production stack — the whole app on one host, TLS included:
+#   1. Create a .env file next to this (see .env.example's production section).
+#   2. Run ./deploy.sh   (or: docker compose -f docker-compose.prod.yml up -d --build)
+#   3. Point your domain's A record at this host — Caddy handles TLS itself.
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      # Until a real domain is set, Caddy serves any host on plain :80.
+      - SITE_DOMAIN=${SITE_DOMAIN:-:80}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    command: ["gotenberg", "--api-timeout=120s", "--libreoffice-restart-after=10"]
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost}
+    # Not host-exposed — Caddy is the only public entry point.
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - STORAGE_DIR=/data/storage
+      - AUTH_SECRET=${AUTH_SECRET:?create a .env file with AUTH_SECRET}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost}
+      - AUTH_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost}
+      - AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID:-}
+      - AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET:-}
+      - AUTH_GITHUB_ID=${AUTH_GITHUB_ID:-}
+      - AUTH_GITHUB_SECRET=${AUTH_GITHUB_SECRET:-}
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      target: worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - GOTENBERG_URL=http://gotenberg:3000
+      - STORAGE_DIR=/data/storage
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      - redis
+      - gotenberg
+    init: true
+    restart: unless-stopped
+
+volumes:
+  storage:
+  caddy_data:
+  caddy_config:

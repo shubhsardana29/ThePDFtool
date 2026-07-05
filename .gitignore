@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.gstack/
+
+# job files (uploaded/processed PDFs — never commit user data)
+/storage/

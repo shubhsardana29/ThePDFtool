@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PDF Tools
 
-## Getting Started
+A self-hostable iLovePDF-style web app: 23 PDF tools with a hybrid processing
+model — simple operations run entirely in the browser (files never leave the
+device), heavy operations run through a job queue on the server and are
+auto-deleted within an hour.
 
-First, run the development server:
+## Tools
+
+**Client-side** (private by design): merge, split, extract pages, rotate,
+organize, watermark, page numbers, JPG→PDF, PDF→JPG, edit (text/boxes/
+highlights/images), sign, compare, redact.
+
+**Server-side** (Docker engines): compress, Office→PDF, PDF→Word,
+PDF→PowerPoint, HTML→PDF, protect, unlock, OCR, repair, PDF/A.
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # then set AUTH_SECRET (openssl rand -base64 32)
+docker compose up -d         # redis + gotenberg + job worker
+npm install
+npm run dev                  # app on http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+In development a fake "Dev login" provider is available to test the
+signed-in tier. Real OAuth (Google/GitHub) activates when the AUTH_* env
+vars are set — see `.env.example`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test        # unit tests (engine ops, validation, diff)
+npm run lint
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Production
 
-## Learn More
+On the VPS (needs Docker + ports 80/443 open):
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+git clone <this repo> && cd pdf
+echo "AUTH_SECRET=$(openssl rand -base64 32)" > .env
+./deploy.sh
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+That's the whole deploy — Caddy fronts everything and the stack serves on
+`http://<vps-ip>`. When you buy a domain:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# 1. point the domain's A record at the VPS IP, then:
+echo "SITE_DOMAIN=your-domain.com" >> .env
+echo "NEXT_PUBLIC_SITE_URL=https://your-domain.com" >> .env
+./deploy.sh   # Caddy provisions Let's Encrypt TLS automatically
+```
 
-## Deploy on Vercel
+Re-run `./deploy.sh` after any code update. Monitor `GET /api/health`;
+sitemap at `/sitemap.xml`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Architecture
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/lib/tools/registry.ts` — every tool is a `ToolDefinition`; the generic
+  UI (upload → options → run → download) is driven entirely by these entries.
+  Adding a tool = one definition + one processor function.
+- `src/lib/engine-client/` — pdf-lib/pdfjs implementations; pdf-lib ops run in
+  a Web Worker (`src/workers/pdf.worker.ts`), rendering runs on the main thread.
+- `src/lib/engine-server/` — `execFile` wrappers for Ghostscript, qpdf,
+  ocrmypdf, LibreOffice, plus the Gotenberg HTTP client.
+- `src/app/api/jobs/` — upload (validated by magic bytes, rate-limited,
+  tier-quota'd) → BullMQ → `src/worker/index.ts` → poll → download.
+- Quotas: anonymous 10 jobs/day (50 MB/file), signed-in 50/day (100 MB/file),
+  enforced in Redis. Client-side tools are unlimited.
+
+## Security properties
+
+- Server files stored under synthetic UUID paths, deleted after 1 hour.
+- Uploads validated by magic bytes, never by extension alone.
+- All engine shell-outs use argument arrays (`execFile`) — no shell strings.
+- Internal error details stay in worker logs; users see friendly messages.
+- No secrets in the repo — runtime config only via env.
+
+## Not yet built
+
+PDF→Excel (needs real table extraction), Stripe/premium billing, i18n,
+S3/R2 storage backend (single-host disk storage today), cryptographic
+signatures (signing is visual).

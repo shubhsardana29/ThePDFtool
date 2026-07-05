@@ -1,0 +1,28 @@
+services:
+  redis:
+    image: redis:7-alpine
+    # Bound to loopback only — never exposed beyond this machine.
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    # Not exposed to the host at all; only the worker talks to it.
+    # Timeout matches the worker's own 120s fetch timeout for conversions.
+    command: ["gotenberg", "--api-timeout=120s", "--libreoffice-restart-after=10"]
+    restart: unless-stopped
+
+  worker:
+    build: docker/worker
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - GOTENBERG_URL=http://gotenberg:3000
+      - STORAGE_DIR=/app/storage
+    depends_on:
+      - redis
+      - gotenberg
+    init: true
+    restart: unless-stopped

@@ -1,0 +1,27 @@
+# SITE_DOMAIN comes from .env (docker-compose defaults it to ":80", which
+# serves plain HTTP for any host so you can test via the VPS IP). Set it to
+# "yourdomain.tld, www.yourdomain.tld" and point both DNS records here — Caddy
+# provisions Let's Encrypt TLS for both automatically, no other change.
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# Canonicalize www → apex (matches any domain; inert in :80 dev mode).
+	@www header_regexp www Host ^www\.(.+)$
+	redir @www https://{re.www.1}{uri} permanent
+
+	# Matches the app's 200 MB per-job cap (plus multipart overhead).
+	request_body {
+		max_size 210MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	reverse_proxy web:3000
+}
