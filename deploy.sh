@@ -4,7 +4,17 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-COMPOSE=(docker compose -p pdftools -f docker-compose.prod.yml)
+# Prefer the compose v2 plugin; fall back to standalone docker-compose.
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE=(docker compose -p pdftools -f docker-compose.prod.yml)
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE=(docker-compose -p pdftools -f docker-compose.prod.yml)
+else
+  echo "Docker Compose not found. Install it first:"
+  echo "  sudo apt-get update && sudo apt-get install -y docker-compose-plugin"
+  echo "  (or on Ubuntu's docker.io package: docker-compose-v2)"
+  exit 1
+fi
 
 if [ ! -f .env ]; then
   echo "No .env file. Create one first:"
@@ -27,7 +37,8 @@ echo "==> Starting stack"
 
 echo "==> Waiting for web to become healthy"
 for i in $(seq 1 45); do
-  status=$("${COMPOSE[@]}" ps --format '{{.Health}}' web 2>/dev/null || echo starting)
+  cid=$("${COMPOSE[@]}" ps -q web 2>/dev/null | head -1)
+  status=$(docker inspect --format '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo starting)
   if [ "$status" = "healthy" ]; then
     echo "==> Healthy. Deployed."
     docker image prune -f >/dev/null
