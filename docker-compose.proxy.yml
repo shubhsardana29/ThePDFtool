@@ -1,0 +1,63 @@
+# Behind-proxy production stack — for hosts where an existing reverse proxy
+# (nginx/traefik/caddy) already owns ports 80/443 and terminates TLS.
+# The web app is exposed on 127.0.0.1:${WEB_PORT} (default 3020); point the
+# host's proxy at it. No Caddy service in this mode.
+#
+# Enable by putting these in .env:
+#   DEPLOY_MODE=proxy
+#   WEB_PORT=3020
+# then run ./deploy.sh as usual.
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    command: ["gotenberg", "--api-timeout=120s", "--libreoffice-restart-after=10"]
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost}
+    # Loopback only — reachable solely through the host's reverse proxy.
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3020}:3000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - STORAGE_DIR=/data/storage
+      - AUTH_SECRET=${AUTH_SECRET:?create a .env file with AUTH_SECRET}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost}
+      - AUTH_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost}
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      target: worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - GOTENBERG_URL=http://gotenberg:3000
+      - STORAGE_DIR=/data/storage
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      - redis
+      - gotenberg
+    init: true
+    restart: unless-stopped
+
+volumes:
+  storage:

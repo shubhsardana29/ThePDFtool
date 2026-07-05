@@ -4,11 +4,20 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# DEPLOY_MODE=proxy in .env → no Caddy; an existing host proxy terminates TLS
+# and forwards to 127.0.0.1:${WEB_PORT:-3020}.
+COMPOSE_FILE=docker-compose.prod.yml
+MODE=edge
+if grep -qE '^DEPLOY_MODE=proxy' .env 2>/dev/null; then
+  COMPOSE_FILE=docker-compose.proxy.yml
+  MODE=proxy
+fi
+
 # Prefer the compose v2 plugin; fall back to standalone docker-compose.
 if docker compose version >/dev/null 2>&1; then
-  COMPOSE=(docker compose -p pdftools -f docker-compose.prod.yml)
+  COMPOSE=(docker compose -p pdftools -f "$COMPOSE_FILE")
 elif command -v docker-compose >/dev/null 2>&1; then
-  COMPOSE=(docker-compose -p pdftools -f docker-compose.prod.yml)
+  COMPOSE=(docker-compose -p pdftools -f "$COMPOSE_FILE")
 else
   echo "Docker Compose not found. Install it first:"
   echo "  sudo apt-get update && sudo apt-get install -y docker-compose-plugin"
@@ -32,8 +41,10 @@ echo "==> Starting stack"
 
 # `up -d` won't restart caddy for Caddyfile-only changes (it's a bind mount) —
 # reload its config explicitly. Falls back to restart on older caddy images.
-"${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null \
-  || "${COMPOSE[@]}" restart caddy
+if [ "$MODE" = "edge" ]; then
+  "${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null \
+    || "${COMPOSE[@]}" restart caddy
+fi
 
 echo "==> Waiting for web to become healthy"
 for i in $(seq 1 45); do
