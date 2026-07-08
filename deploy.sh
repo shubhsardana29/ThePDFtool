@@ -14,10 +14,12 @@ if grep -qE '^DEPLOY_MODE=proxy' .env 2>/dev/null; then
 fi
 
 # Prefer the compose v2 plugin; fall back to standalone docker-compose.
+COMPOSE_V1=false
 if docker compose version >/dev/null 2>&1; then
   COMPOSE=(docker compose -p pdftools -f "$COMPOSE_FILE")
 elif command -v docker-compose >/dev/null 2>&1; then
   COMPOSE=(docker-compose -p pdftools -f "$COMPOSE_FILE")
+  COMPOSE_V1=true
 else
   echo "Docker Compose not found. Install it first:"
   echo "  sudo apt-get update && sudo apt-get install -y docker-compose-plugin"
@@ -37,6 +39,14 @@ echo "==> Building images"
 "${COMPOSE[@]}" build
 
 echo "==> Starting stack"
+if [ "$COMPOSE_V1" = true ]; then
+  # compose v1 crashes recreating containers on Docker engine >= 25
+  # (KeyError: 'ContainerConfig') — remove app containers so `up` does a
+  # fresh create instead. Redis/gotenberg keep running; brief app downtime.
+  APP_SERVICES=(web worker)
+  [ "$MODE" = "edge" ] && APP_SERVICES+=(caddy)
+  "${COMPOSE[@]}" rm -sf "${APP_SERVICES[@]}" 2>/dev/null || true
+fi
 "${COMPOSE[@]}" up -d
 
 # `up -d` won't restart caddy for Caddyfile-only changes (it's a bind mount) —
