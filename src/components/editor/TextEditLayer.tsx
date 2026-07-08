@@ -79,12 +79,16 @@ export function TextEditLayer({ scale, lines, items, getCanvas, onCommit }: Prop
   const [blocked, setBlocked] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Focus + select-all only when a line is first opened — keying this on the
+  // `editing` object would re-select on every keystroke, making the next
+  // character replace everything typed so far.
+  const editingLine = editing?.line ?? null;
   useEffect(() => {
-    if (editing) {
+    if (editingLine) {
       inputRef.current?.focus();
       inputRef.current?.select();
     }
-  }, [editing]);
+  }, [editingLine]);
 
   function open(line: DetectedLine) {
     const colors = sampleFromCanvas(getCanvas(), line, scale);
