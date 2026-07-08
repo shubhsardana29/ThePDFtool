@@ -31,6 +31,36 @@ describe("flatten", () => {
     expect(out.data.length).toBeGreaterThan(originalSize);
   });
 
+  it("stamps lines, arrows, ellipses, and pen paths", async () => {
+    const src = await makePdf(1);
+    const items: OverlayItem[] = [
+      { id: "l1", kind: "line", page: 0, x: 50, y: 50, x2: 200, y2: 80, color: "#d92626", strokeWidth: 2, arrow: false },
+      { id: "a1", kind: "line", page: 0, x: 50, y: 120, x2: 200, y2: 120, color: "#2266dd", strokeWidth: 3, arrow: true },
+      { id: "e1", kind: "ellipse", page: 0, x: 250, y: 50, w: 120, h: 70, color: "#16a34a", fill: false, opacity: 1 },
+      {
+        id: "p1",
+        kind: "path",
+        page: 0,
+        x: 60,
+        y: 200,
+        w: 100,
+        h: 40,
+        points: [
+          { x: 0, y: 20 },
+          { x: 30, y: 0 },
+          { x: 60, y: 40 },
+          { x: 100, y: 10 },
+        ],
+        color: "#d92626",
+        strokeWidth: 2,
+      },
+    ];
+    const [out] = await flatten([src], { items });
+    const doc = await PDFDocument.load(out.data);
+    expect(doc.getPageCount()).toBe(1);
+    expect(out.data.length).toBeGreaterThan(src.data.length);
+  });
+
   it("ignores items pointing at nonexistent pages", async () => {
     const src = await makePdf(1);
     const items: OverlayItem[] = [

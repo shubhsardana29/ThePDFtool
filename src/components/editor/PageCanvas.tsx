@@ -8,10 +8,12 @@ interface Props {
   /** Zero-based page index. */
   pageIndex: number;
   scale: number;
+  /** Reports the canvas element (for pixel sampling by the edit-text mode). */
+  onCanvasRef?: (el: HTMLCanvasElement | null) => void;
 }
 
 /** Renders one PDF page into a canvas at the given scale. */
-export function PageCanvas({ doc, pageIndex, scale }: Props) {
+export function PageCanvas({ doc, pageIndex, scale, onCanvasRef }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -35,5 +37,13 @@ export function PageCanvas({ doc, pageIndex, scale }: Props) {
     };
   }, [doc, pageIndex, scale]);
 
-  return <canvas ref={ref} className="block h-auto w-full" />;
+  return (
+    <canvas
+      ref={(el) => {
+        ref.current = el;
+        onCanvasRef?.(el);
+      }}
+      className="block h-auto w-full"
+    />
+  );
 }

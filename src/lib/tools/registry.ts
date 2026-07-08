@@ -260,7 +260,8 @@ export const TOOLS: ToolDefinition[] = [
   {
     id: "edit",
     name: "Edit PDF",
-    description: "Add text, boxes, highlights and images anywhere on a PDF.",
+    description:
+      "Edit existing text in place, or add text, shapes, highlights and images.",
     category: "edit",
     accept: PDF_ACCEPT,
     minFiles: 1,

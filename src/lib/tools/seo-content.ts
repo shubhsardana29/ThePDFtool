@@ -255,26 +255,30 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
   },
 
   edit: {
-    title: "Edit PDF Online Free — Add Text, Boxes & Images, No Upload",
+    title: "Edit PDF Text Online Free — Change Existing Text, No Upload",
     description:
-      "Add text, boxes, highlights, and images anywhere on a PDF, visually. Free, no signup, and the document never leaves your browser.",
+      "Click any text in your PDF and edit it in place — the original text is truly removed, not covered. Plus shapes, highlights, images and freehand drawing. All in your browser.",
     intro: [
-      "Drop text anywhere on the page, draw attention with boxes and highlights, or place an image — a logo, a stamp, a photo — exactly where it belongs. Drag to position, resize with a handle, and edit content and colors from the toolbar. When it looks right, one click flattens your edits into the PDF.",
-      "Everything happens in your browser: the page previews are rendered locally and your edits are stamped into the file on your own machine. No upload, no account, no watermark.",
+      "Click “Edit text”, then click any line in your document to rewrite it in place — fix a typo, change a date, update an amount. The original text is genuinely removed from the file (not hidden under a white box), and your replacement is set in a matching font at the exact same position. You can also add new text, boxes, highlights, arrows, ellipses, freehand pen strokes, and images anywhere on the page, with full undo/redo.",
+      "Everything happens in your browser: the page previews are rendered locally and your edits are written into the file on your own machine. No upload, no account, no watermark.",
     ],
     faqs: [
       {
         q: "Can I edit the existing text in my PDF?",
-        a: "This editor adds new content on top of the document — text, shapes, highlights, images. It doesn't rewrite existing text, which keeps the original layout intact. To black out existing content, use the Redact tool.",
+        a: "Yes. Use the “Edit text” mode, click any line, and type your replacement. The original text is removed from the document's content — it can't be selected, searched, or extracted afterwards — and the new text is drawn at the same position in a matching font.",
+      },
+      {
+        q: "Will the replacement text match my document's font?",
+        a: "The editor detects the original size, weight, and style, and sets your replacement in a metrically compatible font (the same families used by Word and Google Docs for Arial and Times). For most documents the change is indistinguishable; unusual decorative fonts are approximated.",
       },
       {
         q: "Can I move and resize things after placing them?",
-        a: "Yes. Click any item to select it, drag to move, use the corner handle to resize, and change text, size, or color from the toolbar.",
+        a: "Yes. Click any added item to select it, drag to move, use the corner handle to resize, nudge with arrow keys, and undo/redo with Ctrl+Z / Ctrl+Shift+Z.",
       },
       { q: "Is my PDF uploaded while I edit?", a: "No. " + PRIVATE_NOTE },
       {
         q: "Will my edits be visible in every PDF reader?",
-        a: "Yes. Edits are flattened into the page content itself, not stored as annotations, so they appear identically in Adobe Reader, Preview, browsers, and print.",
+        a: "Yes. Edits are written into the page content itself, not stored as annotations, so they appear identically in Adobe Reader, Preview, browsers, and print.",
       },
     ],
     related: ["sign", "watermark", "redact"],
