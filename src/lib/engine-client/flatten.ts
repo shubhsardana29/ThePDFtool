@@ -46,14 +46,20 @@ function drawText(page: PDFPage, font: PDFFont, item: Extract<OverlayItem, { kin
 /**
  * Remove the original text of every text-edit item from its page's content
  * stream. Items whose text can't be located (e.g. inside a Form XObject) or
- * that are flagged forceCover are returned for the cover fallback.
+ * that are flagged forceCover are returned for the cover fallback. Also
+ * reports which document font drew each edited line, so replacements can be
+ * set in the document's own typeface.
  */
 async function removeEditedText(
   doc: PDFDocument,
   pages: PDFPage[],
   textEdits: TextEditItem[],
-): Promise<Set<string>> {
+): Promise<{
+  coverIds: Set<string>;
+  nativeFonts: Map<string, { resName: string; size: number }>;
+}> {
   const coverIds = new Set<string>();
+  const nativeFonts = new Map<string, { resName: string; size: number }>();
   const { removeTextInRegions } = await import("./content-edit");
   const byPage = new Map<number, TextEditItem[]>();
   for (const item of textEdits) {
@@ -68,13 +74,14 @@ async function removeEditedText(
     for (const item of pageItems) if (item.forceCover) coverIds.add(item.id);
     if (removable.length === 0) continue;
     try {
-      const { removed, invisible } = removeTextInRegions(
+      const { removed, invisible, regionFonts } = removeTextInRegions(
         doc,
         page,
         removable.map((i) => ({ x: i.x, y: i.y, w: i.w, h: i.h, baseline: i.baseline })),
       );
       removable.forEach((item, i) => {
         if (removed[i] === 0 && invisible[i] === 0) coverIds.add(item.id);
+        if (regionFonts[i]) nativeFonts.set(item.id, regionFonts[i]!);
       });
     } catch (err) {
       // Malformed stream — never fail the export; cover every line instead.
@@ -82,17 +89,15 @@ async function removeEditedText(
       for (const item of removable) coverIds.add(item.id);
     }
   }
-  return coverIds;
+  return { coverIds, nativeFonts };
 }
 
 /** Embed the Liberation variant each text edit needs (once per variant). */
 async function embedEditFonts(
   doc: PDFDocument,
   textEdits: TextEditItem[],
-  fallback: PDFFont,
+  fallback: () => Promise<PDFFont>,
 ): Promise<Map<string, PDFFont>> {
-  const fontkit = (await import("@pdf-lib/fontkit")).default;
-  doc.registerFontkit(fontkit);
   const { embedVariant, variantKey } = await import("./font-match");
   const byVariant = new Map<string, PDFFont>();
   const byItem = new Map<string, PDFFont>();
@@ -103,7 +108,7 @@ async function embedEditFonts(
         byVariant.set(key, await embedVariant(doc, item));
       } catch (err) {
         console.error(`font ${key} unavailable, using Helvetica:`, err);
-        byVariant.set(key, fallback);
+        byVariant.set(key, await fallback());
       }
     }
     byItem.set(item.id, byVariant.get(key)!);
@@ -118,22 +123,46 @@ async function embedEditFonts(
 export const flatten: EngineOp = async ([file], options) => {
   const items = (options.items ?? []) as OverlayItem[];
   const doc = await PDFDocument.load(file.data);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
   const pages = doc.getPages();
 
+  // Helvetica is embedded lazily — an export whose edits all reuse document
+  // fonts shouldn't carry an unused font dict.
+  let helvetica: PDFFont | null = null;
+  const getHelvetica = async (): Promise<PDFFont> =>
+    (helvetica ??= await doc.embedFont(StandardFonts.Helvetica));
+
   // Inline text edits: remove originals first (before any drawing appends
-  // content), then draw replacements in the loop below.
+  // content), then draw replacements in the loop below — preferring the
+  // document's own font, with Liberation only for text it can't encode.
   const textEdits = items.filter(
     (i): i is TextEditItem => i.kind === "text-edit",
   );
-  const coverIds =
-    textEdits.length > 0
-      ? await removeEditedText(doc, pages, textEdits)
-      : new Set<string>();
-  const editFonts =
-    textEdits.length > 0
-      ? await embedEditFonts(doc, textEdits, font)
-      : new Map<string, PDFFont>();
+  let coverIds = new Set<string>();
+  const nativeTexts = new Map<
+    string,
+    import("./native-text").PreparedNativeText
+  >();
+  let editFonts = new Map<string, PDFFont>();
+  if (textEdits.length > 0) {
+    const fontkit = (await import("@pdf-lib/fontkit")).default;
+    doc.registerFontkit(fontkit);
+    const removal = await removeEditedText(doc, pages, textEdits);
+    coverIds = removal.coverIds;
+
+    const { prepareNativeText } = await import("./native-text");
+    for (const item of textEdits) {
+      const native = removal.nativeFonts.get(item.id);
+      const page = pages[item.page];
+      if (!native || !page) continue;
+      const prepared = prepareNativeText(page, native.resName, item.newText, fontkit);
+      if (prepared) nativeTexts.set(item.id, prepared);
+    }
+
+    const needLiberation = textEdits.filter((i) => !nativeTexts.has(i.id));
+    if (needLiberation.length > 0) {
+      editFonts = await embedEditFonts(doc, needLiberation, getHelvetica);
+    }
+  }
 
   for (const item of items) {
     const page = pages[item.page];
@@ -141,7 +170,7 @@ export const flatten: EngineOp = async ([file], options) => {
     const pageH = page.getHeight();
     switch (item.kind) {
       case "text":
-        drawText(page, font, item);
+        drawText(page, await getHelvetica(), item);
         break;
       case "rect": {
         const { r, g, b } = hexToRgb(item.color);
@@ -250,12 +279,23 @@ export const flatten: EngineOp = async ([file], options) => {
             color: rgb(bg.r, bg.g, bg.b),
           });
         }
+        const native = nativeTexts.get(item.id);
+        if (native) {
+          const { drawNativeText } = await import("./native-text");
+          drawNativeText(page, native, {
+            x: item.x,
+            baselineY: pageH - item.baseline,
+            size: item.fontSize,
+            colorHex: item.color,
+          });
+          break;
+        }
         const tc = hexToRgb(item.color);
         page.drawText(item.newText, {
           x: item.x,
           y: pageH - item.baseline,
           size: item.fontSize,
-          font: editFonts.get(item.id) ?? font,
+          font: editFonts.get(item.id) ?? (await getHelvetica()),
           color: rgb(tc.r, tc.g, tc.b),
         });
         break;

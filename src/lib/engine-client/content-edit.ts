@@ -41,6 +41,11 @@ export interface RemovalResult {
   removed: number[];
   /** Per region: ops kept but made invisible (widths were uncomputable). */
   invisible: number[];
+  /**
+   * Per region: the font resource name and size of the first matched show op
+   * — lets the caller redraw replacement text in the document's own font.
+   */
+  regionFonts: ({ resName: string; size: number } | null)[];
 }
 
 // ——— matrices (PDF row-vector convention: p' = p × M) ———
@@ -228,7 +233,7 @@ function writePageContent(page: PDFPage, bytes: Uint8Array): void {
   page.node.set(PDFName.of("Contents"), ref);
 }
 
-function fontDictFor(page: PDFPage, resourceName: string): PDFDict | null {
+export function fontDictFor(page: PDFPage, resourceName: string): PDFDict | null {
   const resources = page.node.Resources();
   if (!(resources instanceof PDFDict)) return null;
   const fonts = resources.lookup(PDFName.of("Font"));
@@ -251,6 +256,8 @@ interface ShowOp {
   /** Font size / horizontal scale in effect at this op (for the compensator). */
   Tfs: number;
   Th: number;
+  /** Font resource name in effect at this op. */
+  TfName: string;
   /** For ' and ": the line-advance side effects that must be preserved. */
   quote: null | { tw?: number; tc?: number };
 }
@@ -270,10 +277,11 @@ export function removeTextInRegions(
 ): RemovalResult {
   const removed = regions.map(() => 0);
   const invisible = regions.map(() => 0);
-  if (regions.length === 0) return { removed, invisible };
+  const regionFonts = regions.map<RemovalResult["regionFonts"][number]>(() => null);
+  if (regions.length === 0) return { removed, invisible, regionFonts };
 
   const src = readPageContent(page);
-  if (!src) return { removed, invisible };
+  if (!src) return { removed, invisible, regionFonts };
   const records = tokenizeContentStream(src);
   const pageH = page.getHeight();
 
@@ -318,7 +326,19 @@ export function removeTextInRegions(
     const pos = apply(m, 0, Ts);
     const effSize = Tfs * Math.hypot(m[2], m[3]);
     const advance = advanceOf(record.operands, widthTable(), Tfs, Tc, Tw, Th);
-    shows.push({ record, index, pos, posReliable, effSize, advance, Tr, Tfs, Th, quote });
+    shows.push({
+      record,
+      index,
+      pos,
+      posReliable,
+      effSize,
+      advance,
+      Tr,
+      Tfs,
+      Th,
+      TfName,
+      quote,
+    });
     if (advance !== null) Tm = concat(translate(advance, 0), Tm);
     else posReliable = false;
   };
@@ -421,6 +441,9 @@ export function removeTextInRegions(
         op.pos.x <= r.x1,
     );
     if (regionIdx < 0) continue;
+    if (!regionFonts[regionIdx] && op.TfName) {
+      regionFonts[regionIdx] = { resName: op.TfName, size: op.Tfs };
+    }
 
     // Does any later show op in this text block depend on this op's advance?
     let dependent = false;
@@ -475,5 +498,5 @@ export function removeTextInRegions(
   if (edits.length > 0) {
     writePageContent(page, spliceStream(src, edits));
   }
-  return { removed, invisible };
+  return { removed, invisible, regionFonts };
 }

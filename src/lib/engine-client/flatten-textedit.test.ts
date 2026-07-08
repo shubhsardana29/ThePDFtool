@@ -86,6 +86,113 @@ describe("flatten with text-edit items (true removal)", () => {
     expect(strings.join(" ")).toContain("199");
   });
 
+  it("reuses the document's own font for the replacement (standard-14)", async () => {
+    const src = await fixture();
+    const originalSize = src.data.length;
+    const [out] = await flatten([src], { items: [editItem()] });
+
+    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const doc = await pdfjs.getDocument({ data: out.data.slice() }).promise;
+    const tc = await (await doc.getPage(1)).getTextContent();
+    const items = tc.items.filter(
+      (i): i is (typeof tc.items)[number] & { str: string; fontName: string } =>
+        "str" in i && !!i.str.trim(),
+    );
+    const replacement = items.find((i) => i.str.includes("199"));
+    const untouched = items.find((i) => i.str.includes("Keep this line"));
+    await doc.loadingTask.destroy();
+
+    expect(replacement).toBeDefined();
+    expect(untouched).toBeDefined();
+    // Same pdfjs font object = same font resource in the PDF.
+    expect(replacement!.fontName).toBe(untouched!.fontName);
+    // No Liberation subset was embedded — output grows by only a few bytes.
+    expect(out.data.length - originalSize).toBeLessThan(4 * 1024);
+  });
+
+  it("reuses an embedded Type0 subset font when glyphs are covered", async () => {
+    const { readFile: rf } = await import("node:fs/promises");
+    const data = new Uint8Array(
+      await rf(path.join(process.cwd(), "src/lib/engine-client/__fixtures__/chrome-print.pdf")),
+    );
+    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const { detectTextLines } = await import("./text-detect");
+
+    // Find the heading line and its original font.
+    const inDoc = await pdfjs.getDocument({ data: data.slice() }).promise;
+    const lines = await detectTextLines(
+      inDoc as never,
+      0,
+    );
+    const target = lines.find((l) => l.text.includes("Quarterly Report 2026"))!;
+    await inDoc.loadingTask.destroy();
+    expect(target).toBeDefined();
+
+    const countFonts = async (bytes: Uint8Array) => {
+      const { PDFDocument: PD, PDFDict, PDFName } = await import("pdf-lib");
+      const d = await PD.load(bytes.slice());
+      const fonts = d.getPage(0).node.Resources()?.lookup(PDFName.of("Font"));
+      return fonts instanceof PDFDict ? fonts.keys().length : 0;
+    };
+    const fontsBefore = await countFonts(data);
+
+    // "2060" uses only glyphs already in the heading font's subset
+    // (Q,u,a,r,t,e,l,y,R,p,o,2,0,6) — the native path must handle it.
+    const [out] = await flatten(
+      [{ name: "c.pdf", data, mime: "application/pdf" }],
+      {
+        items: [
+          editItem({
+            page: target.page,
+            x: target.x,
+            y: target.y,
+            w: target.w,
+            h: target.h,
+            baseline: target.baseline,
+            fontSize: target.fontSize,
+            originalText: target.text,
+            newText: "Quarterly Report 2060",
+          }),
+        ],
+      },
+    );
+
+    const outDoc = await pdfjs.getDocument({ data: out.data.slice() }).promise;
+    const outTc = await (await outDoc.getPage(1)).getTextContent();
+    const outItems = outTc.items.filter(
+      (i): i is (typeof outTc.items)[number] & { str: string; fontName: string } =>
+        "str" in i && !!i.str.trim(),
+    );
+    await outDoc.loadingTask.destroy();
+    const joined = outItems.map((i) => i.str).join(" ");
+    expect(joined).toContain("2060");
+    expect(joined).not.toContain("2026");
+    // Native reuse adds no font resources; the Liberation fallback would.
+    expect(await countFonts(out.data)).toBe(fontsBefore);
+
+    // Counter-case: "4" is NOT in the heading font's subset — the engine
+    // must refuse native reuse and embed a Liberation fallback instead.
+    const [out2] = await flatten(
+      [{ name: "c.pdf", data: data.slice(), mime: "application/pdf" }],
+      {
+        items: [
+          editItem({
+            page: target.page,
+            x: target.x,
+            y: target.y,
+            w: target.w,
+            h: target.h,
+            baseline: target.baseline,
+            fontSize: target.fontSize,
+            originalText: target.text,
+            newText: "Quarterly Report 2024",
+          }),
+        ],
+      },
+    );
+    expect(await countFonts(out2.data)).toBe(fontsBefore + 1);
+  });
+
   it("falls back to cover for text inside a Form XObject", async () => {
     const inner = await PDFDocument.create();
     const innerFont = await inner.embedFont(StandardFonts.Helvetica);
