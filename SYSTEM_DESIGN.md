@@ -1,6 +1,6 @@
 # System Design — PDF Tools
 
-A self-hostable iLovePDF-style web application: 34 PDF tools behind one
+A self-hostable iLovePDF-style web application: 39 PDF tools behind one
 generic UI, with a hybrid processing model that keeps most files on the
 user's device and runs the rest through a queued, containerized pipeline.
 
@@ -13,7 +13,7 @@ For run instructions see `README.md`.
 
 | Goal | Consequence in the design |
 |---|---|
-| Privacy first | Everything that *can* run in the browser does. 24 of 34 tools never upload anything. |
+| Privacy first | Everything that *can* run in the browser does. 29 of 39 tools never upload anything. |
 | One person can operate it | Single-host Docker Compose deploy; no managed services required beyond a VPS. |
 | Adding a tool must be cheap | Tool = registry entry + one processor function. UI, validation, and transport are generic. |
 | Untrusted input everywhere | Uploads are validated by magic bytes, filenames are never trusted, engines are shelled with argument arrays only. |
@@ -257,8 +257,8 @@ admin.
 ## 9. Scaling path (deliberately not built yet)
 
 Current capacity: one VPS, worker concurrency 2, LibreOffice conversions
-~5–60 s, everything else seconds. That serves a lot of traffic given 24 of
-34 tools consume zero server resources.
+~5–60 s, everything else seconds. That serves a lot of traffic given 29 of
+39 tools consume zero server resources.
 
 When it outgrows one box, in order:
 

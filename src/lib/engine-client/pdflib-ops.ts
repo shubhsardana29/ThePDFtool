@@ -146,6 +146,81 @@ export const replaceImage: EngineOp = async ([file], options) => {
   return [pdfFile(`${baseName(file.name)}-image-replaced.pdf`, await doc.save())];
 };
 
+export const sanitize: EngineOp = async ([file]) => {
+  const doc = await PDFDocument.load(file.data);
+  doc.setTitle("");
+  doc.setAuthor("");
+  doc.setSubject("");
+  doc.setKeywords([]);
+  doc.setProducer("");
+  doc.setCreator("");
+  // Drop the XMP metadata packet (a common place hidden data lingers).
+  doc.catalog.delete(PDFName.of("Metadata"));
+  return [pdfFile(`${baseName(file.name)}-sanitized.pdf`, await doc.save())];
+};
+
+export const flattenPdf: EngineOp = async ([file]) => {
+  const doc = await PDFDocument.load(file.data);
+  try {
+    doc.getForm().flatten();
+  } catch {
+    // no form / already flat — nothing to do
+  }
+  return [pdfFile(`${baseName(file.name)}-flattened.pdf`, await doc.save())];
+};
+
+export const headerFooter: EngineOp = async ([file], options) => {
+  const header = String(options.header ?? "");
+  const footer = String(options.footer ?? "");
+  const align = String(options.align ?? "center");
+  const doc = await PDFDocument.load(file.data);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const total = doc.getPageCount();
+  const today = new Date().toLocaleDateString();
+  doc.getPages().forEach((page, i) => {
+    const { width, height } = page.getSize();
+    const sub = (t: string) =>
+      t
+        .replace(/\{page\}/g, String(i + 1))
+        .replace(/\{pages\}/g, String(total))
+        .replace(/\{date\}/g, today);
+    const size = 10;
+    const draw = (raw: string, y: number) => {
+      if (!raw.trim()) return;
+      const text = sub(raw);
+      const tw = font.widthOfTextAtSize(text, size);
+      const x = align === "left" ? 40 : align === "right" ? width - 40 - tw : (width - tw) / 2;
+      page.drawText(text, { x, y, size, font, color: rgb(0.2, 0.2, 0.2) });
+    };
+    draw(header, height - 30);
+    draw(footer, 20);
+  });
+  return [pdfFile(`${baseName(file.name)}-header-footer.pdf`, await doc.save())];
+};
+
+const TARGET_SIZES: Record<string, [number, number]> = {
+  a4: [595.28, 841.89],
+  letter: [612, 792],
+};
+
+export const resize: EngineOp = async ([file], options) => {
+  const [tw, th] = TARGET_SIZES[String(options.size ?? "a4")] ?? TARGET_SIZES.a4;
+  const src = await PDFDocument.load(file.data);
+  const out = await PDFDocument.create();
+  const embedded = await out.embedPages(src.getPages());
+  for (const ep of embedded) {
+    const landscape = ep.width > ep.height;
+    const pw = landscape ? Math.max(tw, th) : Math.min(tw, th);
+    const ph = landscape ? Math.min(tw, th) : Math.max(tw, th);
+    const page = out.addPage([pw, ph]);
+    const scale = Math.min(pw / ep.width, ph / ep.height);
+    const w = ep.width * scale;
+    const h = ep.height * scale;
+    page.drawPage(ep, { x: (pw - w) / 2, y: (ph - h) / 2, width: w, height: h });
+  }
+  return [pdfFile(`${baseName(file.name)}-resized.pdf`, await out.save())];
+};
+
 export const bates: EngineOp = async ([file], options) => {
   const prefix = String(options.prefix ?? "");
   const start = Number(options.start ?? 1);
@@ -371,6 +446,10 @@ export const PDFLIB_OPS: Record<string, EngineOp> = {
   "delete-pages": deletePages,
   "n-up": nUp,
   bates,
+  sanitize,
+  "flatten-pdf": flattenPdf,
+  "header-footer": headerFooter,
+  resize,
   "replace-image": replaceImage,
   // edit and sign both stamp overlay items onto the document;
   // fill-form fills AcroForm fields (also via the flatten op)

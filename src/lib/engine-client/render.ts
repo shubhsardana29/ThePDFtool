@@ -83,6 +83,36 @@ export async function pdfToJpg(
   return outputs;
 }
 
+/** Render every page of a PDF as a PNG image (lossless, supports transparency). */
+export async function pdfToPng(
+  files: EngineFile[],
+  options: EngineOptions,
+): Promise<EngineFile[]> {
+  const scale = parseInt(String(options.dpi ?? "150"), 10) / 72;
+  const outputs: EngineFile[] = [];
+  for (const file of files) {
+    const doc = await loadDocument(file.data);
+    const base = baseName(file.name);
+    const pad = String(doc.numPages).length;
+    for (let p = 1; p <= doc.numPages; p++) {
+      const canvas = await renderPage(doc, p, scale);
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error("Failed to encode PNG"))),
+          "image/png",
+        ),
+      );
+      outputs.push({
+        name: `${base}-page-${String(p).padStart(pad, "0")}.png`,
+        data: new Uint8Array(await blob.arrayBuffer()),
+        mime: "image/png",
+      });
+    }
+    await doc.loadingTask.destroy();
+  }
+  return outputs;
+}
+
 /**
  * Extract a PDF's text to a .txt or Markdown file. Uses the pdfjs text layer
  * (main thread, no canvas needed). Markdown adds a document title and a

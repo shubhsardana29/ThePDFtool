@@ -60,6 +60,11 @@ export async function runClientTool(
     const { pdfToJpg } = await import("./render");
     return pdfToJpg(files, options);
   }
+  if (tool.id === "pdf-to-png") {
+    // Needs canvas rendering — main thread.
+    const { pdfToPng } = await import("./render");
+    return pdfToPng(files, options);
+  }
   if (tool.id === "pdf-to-text") {
     // Uses the pdfjs text layer — main thread, like pdf-to-jpg.
     const { pdfToText } = await import("./render");

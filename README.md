@@ -1,21 +1,23 @@
 # PDF Tools
 
-A self-hostable iLovePDF-style web app: 34 PDF tools with a hybrid processing
+A self-hostable iLovePDF-style web app: 39 PDF tools with a hybrid processing
 model — simple operations run entirely in the browser (files never leave the
 device), heavy operations run through a job queue on the server and are
 auto-deleted within an hour.
 
 ## Tools
 
-**Client-side** (private by design — 24 tools):
+**Client-side** (private by design — 29 tools):
 
 - Organize: merge, split, extract pages, delete pages, rotate, organize
-  (visual reorder), crop, N-up (pages per sheet)
-- Convert: JPG→PDF, PDF→JPG, PDF→Text/Markdown, PDF→Excel/CSV, extract images
+  (visual reorder), crop, N-up (pages per sheet), resize (A4/Letter)
+- Convert: JPG→PDF, PDF→JPG, PDF→PNG, PDF→Text/Markdown, PDF→Excel/CSV,
+  extract images
 - Edit: edit (inline text / boxes / highlights / images), replace image, sign,
-  fill forms, redact, watermark, page numbers, Bates numbering, edit metadata,
-  compare
+  fill forms, flatten, redact, watermark, page numbers, header/footer, Bates
+  numbering, edit metadata, compare
 - Optimize: grayscale
+- Security: sanitize (strip metadata)
 
 The editor (edit / sign / redact / fill forms) works on rotated (`/Rotate`)
 pages: detection, overlays, and exports are all rotation-aware.

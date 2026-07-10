@@ -553,6 +553,107 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
     related: ["compress", "pdf-to-jpg", "edit"],
   },
 
+  "pdf-to-png": {
+    title: "PDF to PNG Online Free — Convert PDF Pages to PNG, No Upload",
+    description:
+      "Render each page of a PDF as a lossless PNG image, right in your browser. Free, no signup, and your file is never uploaded.",
+    intro: [
+      "Turn PDF pages into crisp PNG images — lossless, with transparency support, ideal when you need sharper edges than JPG for diagrams, screenshots, or line art. Pick a resolution and every page comes back as its own PNG (bundled as a zip for multi-page files).",
+      "Rendering happens locally in your browser using pdfjs, so your document is never uploaded.",
+    ],
+    faqs: [
+      {
+        q: "PNG or JPG — which should I pick?",
+        a: "PNG is lossless and keeps text and lines crisp (larger files); JPG is smaller but slightly softer. Use PNG for diagrams and screenshots, JPG for photos.",
+      },
+      { q: "What resolution should I choose?", a: "150 dpi is a good default; use 300 dpi for print-quality output or 72 dpi for small on-screen images." },
+      { q: "Is my PDF uploaded to convert it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["pdf-to-jpg", "extract-images", "compress"],
+  },
+
+  sanitize: {
+    title: "Sanitize PDF Online Free — Remove Hidden Metadata, No Upload",
+    description:
+      "Strip a PDF's metadata and hidden document info before you share it. Free, private, and processed entirely in your browser.",
+    intro: [
+      "Clean a PDF before sending it out. This removes the standard document information — title, author, subject, keywords, and the producer/creator strings — and drops the embedded XMP metadata packet, so the file you share doesn't carry names, tools, or notes you didn't mean to include.",
+      "Everything runs locally in your browser, so the document never leaves your device while it's cleaned.",
+    ],
+    faqs: [
+      {
+        q: "What exactly gets removed?",
+        a: "The standard info dictionary (title, author, subject, keywords, creator, producer) and the XMP metadata stream. Page content is untouched.",
+      },
+      {
+        q: "Does it remove everything hidden?",
+        a: "It clears the common metadata surfaces. It does not scrub content embedded inside the page graphics (e.g. text under an image) — use Redact for visible-content removal.",
+      },
+      { q: "Is my PDF uploaded to sanitize it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["edit-metadata", "redact", "protect"],
+  },
+
+  "flatten-pdf": {
+    title: "Flatten PDF Online Free — Bake Form Fields into the Page, No Upload",
+    description:
+      "Flatten a PDF's interactive form fields so the values become permanent, non-editable page content. Free and private.",
+    intro: [
+      "Lock in a filled form. Flattening converts interactive AcroForm fields into ordinary page content, so the answers can no longer be changed and the file renders identically everywhere. Handy before archiving or emailing a completed form.",
+      "It runs entirely in your browser — nothing is uploaded. To fill fields first, use the Fill PDF Form tool (which can also flatten on export).",
+    ],
+    faqs: [
+      {
+        q: "What does flattening do?",
+        a: "It draws each form field's current value into the page and removes the interactive field, so the result looks the same but can't be edited as a form.",
+      },
+      {
+        q: "Does it flatten annotations too?",
+        a: "It flattens interactive form fields (AcroForm). Standalone annotations aren't flattened in this version.",
+      },
+      { q: "Is my PDF uploaded to flatten it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["fill-form", "edit", "protect"],
+  },
+
+  "header-footer": {
+    title: "Add Header & Footer to PDF Online Free — Running Text, No Upload",
+    description:
+      "Add running header and footer text to every page of a PDF, with page-number and date placeholders. Free and private.",
+    intro: [
+      "Stamp a consistent header and/or footer across a whole document — a title, confidentiality notice, page numbers, or date. Use the placeholders {page}, {pages}, and {date} and they're filled in per page, e.g. “Page 3 of 12”.",
+      "The text is drawn locally in your browser with pdf-lib, so nothing is uploaded and the output works in any PDF reader.",
+    ],
+    faqs: [
+      {
+        q: "Which placeholders can I use?",
+        a: "{page} for the current page number, {pages} for the total, and {date} for today's date. Any other text is used verbatim.",
+      },
+      { q: "Can I set only a header or only a footer?", a: "Yes — leave either field blank and it's skipped." },
+      { q: "Is my PDF uploaded to add a header/footer?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["page-numbers", "bates", "watermark"],
+  },
+
+  resize: {
+    title: "Resize PDF Online Free — Scale Pages to A4 or Letter, No Upload",
+    description:
+      "Scale every page of a PDF to a standard paper size (A4 or US Letter). Free, no signup, and processed in your browser.",
+    intro: [
+      "Normalize a PDF to a standard page size so it prints predictably. Each page is scaled to fit A4 or US Letter while preserving its aspect ratio and orientation (landscape pages stay landscape), centered on the new sheet.",
+      "Resizing is composed locally in your browser — pages are embedded as scaled vector content (not rasterized), so text stays sharp and nothing is uploaded.",
+    ],
+    faqs: [
+      {
+        q: "Will it distort my pages?",
+        a: "No. Pages keep their aspect ratio and are centered; they're scaled to fit, not stretched.",
+      },
+      { q: "Which sizes are supported?", a: "A4 (210×297 mm) and US Letter (8.5×11 in), each in the page's own orientation." },
+      { q: "Is my PDF uploaded to resize it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["n-up", "crop", "compress"],
+  },
+
   compare: {
     title: "Compare Two PDFs Online Free — Find Text Differences Privately",
     description:
