@@ -25,6 +25,25 @@ export const protect: ServerOp = async ({ files, outDir, options }) => {
   return outputs;
 };
 
+export const linearize: ServerOp = async ({ files, outDir }) => {
+  const outputs: string[] = [];
+  for (const file of files) {
+    const name = `${outBase(file.original)}-web-optimized.pdf`;
+    await run(
+      "qpdf",
+      [
+        "--linearize", // fast web view: reorder for progressive loading
+        "--object-streams=generate", // compact the object structure
+        file.path,
+        path.join(outDir, name),
+      ],
+      { friendly: "Could not optimize this PDF — it may be corrupt" },
+    );
+    outputs.push(name);
+  }
+  return outputs;
+};
+
 export const unlock: ServerOp = async ({ files, outDir, options }) => {
   const password = String(options.password ?? "");
   const outputs: string[] = [];

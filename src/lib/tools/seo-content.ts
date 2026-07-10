@@ -654,6 +654,53 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
     related: ["n-up", "crop", "compress"],
   },
 
+  "visual-compare": {
+    title: "Visually Compare PDFs Online Free — Pixel Diff, No Upload",
+    description:
+      "See exactly what changed between two PDF versions, page by page, highlighted pixel-by-pixel. Free and private — nothing is uploaded.",
+    intro: [
+      "Catch every visual change between two versions of a document — moved text, swapped images, tweaked layout — not just text edits. Each page is rendered and compared pixel-by-pixel; changed areas are highlighted in red over a faded copy of the page, with the percentage of pixels changed per page.",
+      "Both files are rendered and diffed entirely in your browser, so even confidential drafts never leave your device. For a line-by-line text diff instead, use the Compare PDF tool.",
+    ],
+    faqs: [
+      {
+        q: "How is this different from Compare PDF?",
+        a: "Compare PDF diffs the extracted text. Visual Compare diffs the rendered pixels, so it also catches layout shifts, image changes, and formatting differences that don't change the words.",
+      },
+      {
+        q: "What if the two PDFs have different page sizes?",
+        a: "Pages whose dimensions differ are flagged as changed (they can't be pixel-aligned). Same-size pages are diffed precisely.",
+      },
+      { q: "Are my PDFs uploaded to compare them?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["compare", "edit", "redact"],
+  },
+
+  linearize: {
+    title: "Optimize PDF for Web Online Free — Fast Web View (Linearize)",
+    description:
+      "Linearize a PDF for fast progressive loading in browsers (Fast Web View) and compact its structure. Free online tool.",
+    intro: [
+      "Make a PDF open faster online. Linearizing (a.k.a. Fast Web View) restructures the file so a browser can display the first page before the whole document downloads, and regenerates its object streams to tidy the internal structure — useful for large PDFs served on the web.",
+      "This runs on the server with qpdf: your file is uploaded over an encrypted connection, processed, and deleted within an hour.",
+    ],
+    faqs: [
+      {
+        q: "What does “Fast Web View” actually do?",
+        a: "It reorders the PDF so viewers can render page one while the rest streams in, instead of waiting for the entire file. It also compacts the object structure, which can slightly reduce size.",
+      },
+      {
+        q: "Will it reduce quality or change content?",
+        a: "No. Linearization is lossless — it reorganizes the file without altering pages, text, or images.",
+      },
+      {
+        q: "Is this processed in my browser?",
+        a: "No — unlike most tools here, linearization runs on the server (qpdf). The upload is encrypted and the file is deleted within an hour.",
+      },
+    ],
+    related: ["compress", "repair", "pdfa"],
+  },
+
   compare: {
     title: "Compare Two PDFs Online Free — Find Text Differences Privately",
     description:

@@ -9,6 +9,7 @@ import { MetadataTool } from "@/components/editor/MetadataTool";
 import { RedactTool } from "@/components/editor/RedactTool";
 import { ReplaceImageTool } from "@/components/editor/ReplaceImageTool";
 import { SignTool } from "@/components/editor/SignTool";
+import { VisualCompareTool } from "@/components/editor/VisualCompareTool";
 import { OrganizeTool } from "@/components/OrganizeTool";
 import { ToolRunner } from "@/components/ToolRunner";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -29,6 +30,7 @@ const CUSTOM_UIS = {
   crop: CropTool,
   metadata: MetadataTool,
   replaceimage: ReplaceImageTool,
+  visualcompare: VisualCompareTool,
 } as const;
 
 export function generateStaticParams() {

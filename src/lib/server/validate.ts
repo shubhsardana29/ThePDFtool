@@ -29,6 +29,7 @@ export const TOOL_INPUT_EXTS: Record<string, string[]> = {
   ocr: ["pdf"],
   protect: ["pdf"],
   unlock: ["pdf"],
+  linearize: ["pdf"],
   "pdf-to-word": ["pdf"],
   "pdf-to-powerpoint": ["pdf"],
   "office-to-pdf": ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp"],
