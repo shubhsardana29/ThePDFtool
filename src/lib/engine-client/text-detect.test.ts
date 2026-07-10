@@ -75,11 +75,21 @@ describe("detectTextLines", () => {
     expect(lines.map((l) => l.text)).toEqual(["top", "bottom"]);
   });
 
-  it("returns no targets on rotated pages", async () => {
+  it("detects text on rotated pages in displayed space", async () => {
+    // Readable text on a /Rotate 90 page (drawn rotated so it reads upright in
+    // the display). Displayed page is 800x600 when the 600x800 page is turned.
     const doc = await makeDoc((page, font) => {
-      page.drawText("rotated", { x: 72, y: 700, size: 12, font });
+      page.drawText("rotated line", { x: 72, y: 300, size: 12, font, rotate: degrees(90) });
     }, 90);
-    expect(await detectTextLines(doc, 0)).toEqual([]);
+    const lines = await detectTextLines(doc, 0);
+    expect(lines).toHaveLength(1);
+    expect(lines[0].text).toBe("rotated line");
+    // Geometry is in displayed (rotation-aware) space, inside the turned page.
+    expect(lines[0].x).toBeGreaterThanOrEqual(0);
+    expect(lines[0].x).toBeLessThanOrEqual(800);
+    expect(lines[0].baseline).toBeGreaterThanOrEqual(0);
+    expect(lines[0].baseline).toBeLessThanOrEqual(600);
+    expect(lines[0].w).toBeGreaterThan(20);
   });
 });
 

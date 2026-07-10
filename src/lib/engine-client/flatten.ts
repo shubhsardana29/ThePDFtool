@@ -7,10 +7,12 @@ import {
 } from "pdf-lib";
 import {
   hexToRgb,
+  type FormFieldItem,
   type OverlayItem,
   type TextEditItem,
 } from "@/lib/editor/types";
 import { baseName } from "./pages";
+import { drawAngle, pageRotation, toPdfPoint, toPdfRect } from "./page-rotate";
 import type { EngineFile, EngineOp } from "./types";
 
 const HIGHLIGHT = { color: rgb(1, 0.9, 0.2), opacity: 0.4 };
@@ -26,19 +28,21 @@ function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; isPng: boolean } 
 
 function drawText(page: PDFPage, font: PDFFont, item: Extract<OverlayItem, { kind: "text" }>) {
   const { r, g, b } = hexToRgb(item.color);
-  const pageH = page.getHeight();
+  const rotate = drawAngle(page);
   const lineHeight = item.fontSize * 1.25;
   const lines = item.text.split("\n");
   lines.forEach((line, i) => {
     if (!line) return;
     // item.y is the top of the text block; drawText wants the baseline.
     const baselineFromTop = item.y + i * lineHeight + item.fontSize * 0.85;
+    const at = toPdfPoint(page, item.x, baselineFromTop);
     page.drawText(line, {
-      x: item.x,
-      y: pageH - baselineFromTop,
+      x: at.x,
+      y: at.y,
       size: item.fontSize,
       font,
       color: rgb(r, g, b),
+      rotate,
     });
   });
 }
@@ -117,6 +121,49 @@ async function embedEditFonts(
 }
 
 /**
+ * Fill interactive AcroForm fields via pdf-lib's form API, then optionally
+ * flatten the form (bake values into page content, dropping interactivity).
+ * A field that can't be resolved never fails the export — it's just skipped.
+ */
+function applyFormFields(
+  doc: PDFDocument,
+  formFields: FormFieldItem[],
+  flattenForms: boolean,
+) {
+  const form = doc.getForm();
+  for (const item of formFields) {
+    try {
+      switch (item.fieldType) {
+        case "text":
+          form.getTextField(item.fieldName).setText(String(item.value ?? ""));
+          break;
+        case "checkbox": {
+          const cb = form.getCheckBox(item.fieldName);
+          if (item.value) cb.check();
+          else cb.uncheck();
+          break;
+        }
+        case "dropdown":
+          if (item.value) form.getDropdown(item.fieldName).select(String(item.value));
+          break;
+        case "radio":
+          if (item.value) form.getRadioGroup(item.fieldName).select(String(item.value));
+          break;
+      }
+    } catch (err) {
+      console.error(`form field ${item.fieldName} could not be filled:`, err);
+    }
+  }
+  if (flattenForms) {
+    try {
+      form.flatten();
+    } catch (err) {
+      console.error("form flatten failed:", err);
+    }
+  }
+}
+
+/**
  * Stamp overlay items onto the PDF. options.items is an OverlayItem[] — this
  * runs inside the worker, so everything is plain serializable data.
  */
@@ -124,6 +171,14 @@ export const flatten: EngineOp = async ([file], options) => {
   const items = (options.items ?? []) as OverlayItem[];
   const doc = await PDFDocument.load(file.data);
   const pages = doc.getPages();
+
+  // Interactive form fields: fill (and optionally flatten) via the form API.
+  const formFields = items.filter(
+    (i): i is FormFieldItem => i.kind === "form-field",
+  );
+  if (formFields.length > 0) {
+    applyFormFields(doc, formFields, options.flattenForms === true);
+  }
 
   // Helvetica is embedded lazily — an export whose edits all reuse document
   // fonts shouldn't carry an unused font dict.
@@ -167,7 +222,10 @@ export const flatten: EngineOp = async ([file], options) => {
   for (const item of items) {
     const page = pages[item.page];
     if (!page) continue;
-    const pageH = page.getHeight();
+    // Overlay coords are in DISPLAYED (top-left, rotation-aware) space; map to
+    // pdf-lib's unrotated space and rotate drawn content so it reads upright.
+    const rotate = drawAngle(page);
+    const rot = pageRotation(page);
     switch (item.kind) {
       case "text":
         drawText(page, await getHelvetica(), item);
@@ -175,10 +233,7 @@ export const flatten: EngineOp = async ([file], options) => {
       case "rect": {
         const { r, g, b } = hexToRgb(item.color);
         page.drawRectangle({
-          x: item.x,
-          y: pageH - item.y - item.h,
-          width: item.w,
-          height: item.h,
+          ...toPdfRect(page, item.x, item.y, item.w, item.h),
           ...(item.fill
             ? { color: rgb(r, g, b), opacity: item.opacity }
             : { borderColor: rgb(r, g, b), borderWidth: 2, borderOpacity: item.opacity }),
@@ -187,10 +242,7 @@ export const flatten: EngineOp = async ([file], options) => {
       }
       case "highlight":
         page.drawRectangle({
-          x: item.x,
-          y: pageH - item.y - item.h,
-          width: item.w,
-          height: item.h,
+          ...toPdfRect(page, item.x, item.y, item.w, item.h),
           color: HIGHLIGHT.color,
           opacity: HIGHLIGHT.opacity,
         });
@@ -198,19 +250,22 @@ export const flatten: EngineOp = async ([file], options) => {
       case "image": {
         const { bytes, isPng } = dataUrlToBytes(item.dataUrl);
         const image = isPng ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+        // Anchor at the box's displayed bottom-left corner; rotate to match.
+        const at = toPdfPoint(page, item.x, item.y + item.h);
         page.drawImage(image, {
-          x: item.x,
-          y: pageH - item.y - item.h,
+          x: at.x,
+          y: at.y,
           width: item.w,
           height: item.h,
+          rotate,
         });
         break;
       }
       case "line": {
         const { r, g, b } = hexToRgb(item.color);
         const color = rgb(r, g, b);
-        const start = { x: item.x, y: pageH - item.y };
-        const end = { x: item.x2, y: pageH - item.y2 };
+        const start = toPdfPoint(page, item.x, item.y);
+        const end = toPdfPoint(page, item.x2, item.y2);
         page.drawLine({ start, end, thickness: item.strokeWidth, color });
         if (item.arrow) {
           // Two short strokes at ±150° from the line direction.
@@ -232,11 +287,12 @@ export const flatten: EngineOp = async ([file], options) => {
       }
       case "ellipse": {
         const { r, g, b } = hexToRgb(item.color);
+        const box = toPdfRect(page, item.x, item.y, item.w, item.h);
         page.drawEllipse({
-          x: item.x + item.w / 2,
-          y: pageH - item.y - item.h / 2,
-          xScale: item.w / 2,
-          yScale: item.h / 2,
+          x: box.x + box.width / 2,
+          y: box.y + box.height / 2,
+          xScale: box.width / 2,
+          yScale: box.height / 2,
           ...(item.fill
             ? { color: rgb(r, g, b), opacity: item.opacity }
             : {
@@ -250,20 +306,36 @@ export const flatten: EngineOp = async ([file], options) => {
       case "path": {
         if (item.points.length < 2) break;
         const { r, g, b } = hexToRgb(item.color);
-        // SVG path coordinates run y-down from the given origin — matching
-        // our top-left-origin points directly.
-        const d =
-          `M ${item.points[0].x} ${item.points[0].y} ` +
-          item.points
-            .slice(1)
-            .map((p) => `L ${p.x} ${p.y}`)
-            .join(" ");
-        page.drawSvgPath(d, {
-          x: item.x,
-          y: pageH - item.y,
-          borderColor: rgb(r, g, b),
-          borderWidth: item.strokeWidth,
-        });
+        const color = rgb(r, g, b);
+        if (rot === 0) {
+          // SVG path coordinates run y-down from the given origin — matching
+          // our top-left-origin points directly.
+          const d =
+            `M ${item.points[0].x} ${item.points[0].y} ` +
+            item.points
+              .slice(1)
+              .map((p) => `L ${p.x} ${p.y}`)
+              .join(" ");
+          page.drawSvgPath(d, {
+            x: item.x,
+            y: page.getHeight() - item.y,
+            borderColor: color,
+            borderWidth: item.strokeWidth,
+          });
+        } else {
+          // Rotated page: map each absolute point and stroke as segments.
+          const pts = item.points.map((p) =>
+            toPdfPoint(page, item.x + p.x, item.y + p.y),
+          );
+          for (let i = 1; i < pts.length; i++) {
+            page.drawLine({
+              start: pts[i - 1],
+              end: pts[i],
+              thickness: item.strokeWidth,
+              color,
+            });
+          }
+        }
         break;
       }
       case "text-edit": {
@@ -272,34 +344,37 @@ export const flatten: EngineOp = async ([file], options) => {
         if (coverIds.has(item.id)) {
           const bg = hexToRgb(item.bgColor);
           page.drawRectangle({
-            x: item.x - 1,
-            y: pageH - item.y - item.h - 1,
-            width: item.w + 2,
-            height: item.h + 2,
+            ...toPdfRect(page, item.x - 1, item.y - 1, item.w + 2, item.h + 2),
             color: rgb(bg.r, bg.g, bg.b),
           });
         }
+        const at = toPdfPoint(page, item.x, item.baseline);
         const native = nativeTexts.get(item.id);
         if (native) {
           const { drawNativeText } = await import("./native-text");
           drawNativeText(page, native, {
-            x: item.x,
-            baselineY: pageH - item.baseline,
+            x: at.x,
+            baselineY: at.y,
             size: item.fontSize,
             colorHex: item.color,
+            rotate: rot,
           });
           break;
         }
         const tc = hexToRgb(item.color);
         page.drawText(item.newText, {
-          x: item.x,
-          y: pageH - item.baseline,
+          x: at.x,
+          y: at.y,
           size: item.fontSize,
           font: editFonts.get(item.id) ?? (await getHelvetica()),
           color: rgb(tc.r, tc.g, tc.b),
+          rotate,
         });
         break;
       }
+      case "form-field":
+        // Filled above via the form API — nothing to draw on the page.
+        break;
     }
   }
 

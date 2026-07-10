@@ -6,6 +6,7 @@ import {
   type PDFFont,
   type PDFPage,
 } from "pdf-lib";
+import { extractImages } from "./extract-images";
 import { flatten } from "./flatten";
 import { baseName, parsePageRanges, parseRangeGroups } from "./pages";
 import type { EngineFile, EngineOp } from "./types";
@@ -18,6 +19,39 @@ const PAGE_SIZES: Record<string, [number, number]> = {
 function pdfFile(name: string, data: Uint8Array): EngineFile {
   return { name, data, mime: "application/pdf" };
 }
+
+export const editMetadata: EngineOp = async ([file], options) => {
+  const doc = await PDFDocument.load(file.data);
+  if (typeof options.title === "string") doc.setTitle(options.title);
+  if (typeof options.author === "string") doc.setAuthor(options.author);
+  if (typeof options.subject === "string") doc.setSubject(options.subject);
+  if (typeof options.keywords === "string") {
+    doc.setKeywords(
+      options.keywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean),
+    );
+  }
+  return [pdfFile(`${baseName(file.name)}-metadata.pdf`, await doc.save())];
+};
+
+export const crop: EngineOp = async ([file], options) => {
+  const box = options.box as
+    | { x: number; y: number; w: number; h: number }
+    | undefined;
+  const doc = await PDFDocument.load(file.data);
+  if (box && box.w > 0 && box.h > 0) {
+    // box is in DISPLAYED top-left points (from the crop UI). Convert per page
+    // so it maps correctly even on rotated pages, then set the CropBox.
+    const { toPdfRect } = await import("./page-rotate");
+    for (const page of doc.getPages()) {
+      const r = toPdfRect(page, box.x, box.y, box.w, box.h);
+      page.setCropBox(r.x, r.y, r.width, r.height);
+    }
+  }
+  return [pdfFile(`${baseName(file.name)}-cropped.pdf`, await doc.save())];
+};
 
 export const merge: EngineOp = async (files) => {
   const out = await PDFDocument.create();
@@ -215,7 +249,12 @@ export const PDFLIB_OPS: Record<string, EngineOp> = {
   watermark,
   "page-numbers": pageNumbers,
   "images-to-pdf": imagesToPdf,
-  // edit and sign both stamp overlay items onto the document
+  "extract-images": extractImages,
+  "edit-metadata": editMetadata,
+  crop,
+  // edit and sign both stamp overlay items onto the document;
+  // fill-form fills AcroForm fields (also via the flatten op)
   edit: flatten,
   sign: flatten,
+  "fill-form": flatten,
 };

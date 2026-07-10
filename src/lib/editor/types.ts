@@ -1,10 +1,11 @@
 /**
  * Overlay items placed on top of PDF pages by the edit/sign tools.
  *
- * Coordinates are in PDF points with the origin at the TOP-LEFT of the page
- * (natural for CSS positioning); the flatten step converts to PDF's
- * bottom-left origin. Pages with a /Rotate entry are not adjusted for — v1
- * limitation.
+ * Coordinates are in PDF points with the origin at the TOP-LEFT of the page,
+ * in DISPLAYED (rotation-aware) orientation — the same space pdfjs' viewport
+ * renders, natural for CSS positioning. The flatten step converts to PDF's
+ * bottom-left, unrotated space via page-rotate.ts, so overlays, form fields,
+ * and inline text edits all land correctly on pages with a /Rotate entry.
  */
 
 interface OverlayBase {
@@ -103,6 +104,32 @@ export interface PathItem extends OverlayBase {
   strokeWidth: number;
 }
 
+/**
+ * An interactive AcroForm field (text/checkbox/radio/dropdown) detected in the
+ * document. x/y/w/h are the widget rect. On export the flatten op applies the
+ * value via pdf-lib's form API rather than drawing anything. Radio groups are
+ * modelled as one item per widget sharing `fieldName`: `value` holds the group's
+ * selected export string, `exportValue` this widget's own on-state value.
+ */
+export interface FormFieldItem extends OverlayBase {
+  kind: "form-field";
+  w: number;
+  h: number;
+  /** Fully-qualified AcroField name. */
+  fieldName: string;
+  fieldType: "text" | "checkbox" | "radio" | "dropdown";
+  /** text/dropdown → string; checkbox → boolean; radio → selected export string. */
+  value: string | boolean;
+  /** dropdown choices / radio export values (parallel to displayOptions). */
+  options?: string[];
+  /** Human-readable labels for dropdown choices (falls back to options). */
+  displayOptions?: string[];
+  /** This widget's on-state value (checkbox/radio). */
+  exportValue?: string;
+  multiline?: boolean;
+  readOnly?: boolean;
+}
+
 export type OverlayItem =
   | TextItem
   | RectItem
@@ -111,7 +138,8 @@ export type OverlayItem =
   | TextEditItem
   | LineItem
   | EllipseItem
-  | PathItem;
+  | PathItem
+  | FormFieldItem;
 
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const m = hex.match(/^#?([0-9a-f]{6})$/i);

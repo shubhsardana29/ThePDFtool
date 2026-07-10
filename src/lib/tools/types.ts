@@ -45,7 +45,15 @@ export interface ToolDefinition {
   defaultOptions: Record<string, unknown>;
   optionFields: OptionField[];
   /** Tools with bespoke UIs (e.g. page-thumbnail reordering) name them here. */
-  customUI?: "organize" | "edit" | "sign" | "compare" | "redact";
+  customUI?:
+    | "organize"
+    | "edit"
+    | "sign"
+    | "compare"
+    | "redact"
+    | "fillform"
+    | "crop"
+    | "metadata";
 }
 
 export const PDF_ACCEPT: Record<string, string[]> = {

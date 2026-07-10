@@ -420,11 +420,28 @@ export function removeTextInRegions(
     }
   });
 
-  // Pass 2 — match shows to regions and build edits.
+  // Pass 2 — match shows to regions and build edits. Op positions are in
+  // unrotated user space; regions are in DISPLAYED (rotation-aware) space, so
+  // map each op into displayed space before comparing. Reduces to (pageH - y)
+  // at rotation 0, so un-rotated pages match exactly as before.
+  const rot = (((page.getRotation().angle % 360) + 360) % 360) as 0 | 90 | 180 | 270;
+  const Wu = page.getWidth();
+  const toDisplayed = (xu: number, yu: number): { x: number; y: number } => {
+    switch (rot) {
+      case 90:
+        return { x: yu, y: xu };
+      case 180:
+        return { x: Wu - xu, y: yu };
+      case 270:
+        return { x: pageH - yu, y: Wu - xu };
+      default:
+        return { x: xu, y: pageH - yu };
+    }
+  };
   const deviceRegions = regions.map((r) => ({
     x0: r.x - 2,
     x1: r.x + r.w + 2,
-    baselineY: pageH - r.baseline,
+    baseline: r.baseline,
   }));
 
   const enc = (s: string) => new TextEncoder().encode(s);
@@ -434,11 +451,12 @@ export function removeTextInRegions(
   for (let s = 0; s < shows.length; s++) {
     const op = shows[s];
     if (!op.posReliable) continue;
+    const d = toDisplayed(op.pos.x, op.pos.y);
     const regionIdx = deviceRegions.findIndex(
       (r) =>
-        Math.abs(op.pos.y - r.baselineY) < Math.max(0.45 * op.effSize, 1) &&
-        op.pos.x >= r.x0 &&
-        op.pos.x <= r.x1,
+        Math.abs(d.y - r.baseline) < Math.max(0.45 * op.effSize, 1) &&
+        d.x >= r.x0 &&
+        d.x <= r.x1,
     );
     if (regionIdx < 0) continue;
     if (!regionFonts[regionIdx] && op.TfName) {

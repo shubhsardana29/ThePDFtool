@@ -26,9 +26,11 @@ export interface DetectedLine {
 }
 
 interface Run {
+  /** Displayed-space (top-left origin) run box left edge and width. */
   x: number;
   width: number;
-  baselineFromBottom: number;
+  /** Displayed baseline measured from the page top. */
+  baseline: number;
   fontSize: number;
   ascent: number;
   descent: number;
@@ -58,40 +60,48 @@ export async function detectTextLines(
   pageIndex: number,
 ): Promise<DetectedLine[]> {
   const page = await doc.getPage(pageIndex + 1);
-  // Overlay coordinates don't compensate for page /Rotate — same limitation
-  // as the rest of the editor. No targets on rotated pages.
-  if (page.rotate % 360 !== 0) return [];
-
-  const pageH = page.getViewport({ scale: 1 }).height;
+  // Work in DISPLAYED (rotation-aware) space via the viewport: readable text is
+  // horizontal there at any /Rotate, so line grouping, column splitting and box
+  // geometry are identical to the un-rotated case. At rotation 0 this reduces to
+  // (pageH - y), so output is unchanged for the common case.
+  const viewport = page.getViewport({ scale: 1 });
   const content = await page.getTextContent();
 
-  // Collect runs grouped by (rounded) baseline.
+  // Collect runs grouped by (rounded) displayed baseline.
   const byBaseline = new Map<number, Run[]>();
   for (const item of content.items) {
     if (!("str" in item) || !item.str.trim()) continue;
     const t = item.transform;
     const fontSize = Math.hypot(t[2], t[3]) || Math.hypot(t[0], t[1]);
     if (fontSize <= 0) continue;
+    // Baseline origin and run end in displayed space (advance runs along the
+    // text x-axis, mapped through the rotation-aware viewport).
+    const [vx0, vy0] = viewport.convertToViewportPoint(t[4], t[5]);
+    const axisLen = Math.hypot(t[0], t[1]) || 1;
+    const [vx1] = viewport.convertToViewportPoint(
+      t[4] + (t[0] / axisLen) * item.width,
+      t[5] + (t[1] / axisLen) * item.width,
+    );
     const style = content.styles[item.fontName];
     const run: Run = {
-      x: t[4],
-      width: item.width,
-      baselineFromBottom: t[5],
+      x: Math.min(vx0, vx1),
+      width: Math.abs(vx1 - vx0),
+      baseline: vy0,
       fontSize,
       ascent: style?.ascent || 0.8,
       descent: style?.descent ?? -0.2, // pdfjs descent is negative
       text: item.str,
       pdfjsFontName: item.fontName,
     };
-    const key = Math.round(run.baselineFromBottom * 2) / 2;
+    const key = Math.round(run.baseline * 2) / 2;
     const group = byBaseline.get(key);
     if (group) group.push(run);
     else byBaseline.set(key, [run]);
   }
 
   const lines: DetectedLine[] = [];
-  // Top of page first (PDF y grows upward).
-  const baselines = [...byBaseline.keys()].sort((a, b) => b - a);
+  // Top of page first (smaller displayed y = higher on the page).
+  const baselines = [...byBaseline.keys()].sort((a, b) => a - b);
   for (const key of baselines) {
     const runs = byBaseline.get(key)!.sort((a, b) => a.x - b.x);
     // Split same-baseline columns where the x-gap is too wide to be one line.
@@ -117,7 +127,7 @@ export async function detectTextLines(
       const descent = Math.min(...segment.map((r) => r.descent));
       const x0 = segment[0].x;
       const x1 = Math.max(...segment.map((r) => r.x + r.width));
-      const baselineFromBottom = segment[0].baselineFromBottom;
+      const baseline = segment[0].baseline;
       const text = segment
         .map((r) => r.text)
         .join("")
@@ -150,10 +160,10 @@ export async function detectTextLines(
         page: pageIndex,
         text,
         x: x0,
-        y: pageH - baselineFromBottom - ascent * fontSize,
+        y: baseline - ascent * fontSize,
         w: x1 - x0,
         h: (ascent - descent) * fontSize,
-        baseline: pageH - baselineFromBottom,
+        baseline,
         fontSize,
         ...style,
         cssFontFamily: loadedName

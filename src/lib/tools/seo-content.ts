@@ -307,6 +307,120 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
     related: ["edit", "protect", "watermark"],
   },
 
+  "fill-form": {
+    title: "Fill PDF Form Online Free — Complete Fillable PDFs, No Upload",
+    description:
+      "Fill in interactive PDF forms — text fields, checkboxes, radio buttons and dropdowns — in your browser. Free, no signup, and the form is never uploaded.",
+    intro: [
+      "Complete any fillable PDF form without printing it. Drop the file in and every interactive field — text boxes, checkboxes, radio buttons, and dropdown menus — becomes editable right on the page. Type your answers, tick the boxes, pick from the lists, then download the completed form.",
+      "Choose to keep the fields interactive (so you or someone else can update them later) or flatten the form on export, which bakes your answers into the page so they can't be changed. Everything happens locally — ideal for applications, tax forms, contracts, and other documents you'd rather not hand to a stranger's server.",
+    ],
+    faqs: [
+      {
+        q: "Which kinds of form fields are supported?",
+        a: "Text fields (including multi-line), checkboxes, radio-button groups, and dropdown menus. Multi-select list boxes and digital-signature fields aren't supported yet.",
+      },
+      {
+        q: "What does “flatten form” do?",
+        a: "Flattening converts your filled-in values into permanent page content and removes the interactive fields, so the answers can no longer be edited. Leave it off to keep the form editable after download.",
+      },
+      {
+        q: "It says no fillable fields were found — why?",
+        a: "The PDF has no interactive AcroForm fields (it may be a scan or a flat document). To add text anywhere on a non-fillable PDF, use the Edit PDF tool instead.",
+      },
+      { q: "Is my form uploaded to fill it in?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["sign", "edit", "protect"],
+  },
+
+  "pdf-to-text": {
+    title: "PDF to Text Online Free — Extract Text as TXT or Markdown, No Upload",
+    description:
+      "Extract all the text from a PDF into a plain-text or Markdown file. Free, no signup, and your document never leaves your browser.",
+    intro: [
+      "Pull the words out of any PDF in one click. Choose plain text for a clean .txt file, or Markdown to keep a per-page structure with headings. The extracted text preserves reading order line by line, ready to paste into an editor, feed to another tool, or search.",
+      "Extraction runs entirely in your browser using the same text engine that renders the page previews — your PDF is never uploaded, so it works on confidential documents too.",
+    ],
+    faqs: [
+      {
+        q: "What's the difference between the TXT and Markdown output?",
+        a: "Plain text gives you the raw text of every page separated by blank lines. Markdown adds a document title and a “## Page N” heading before each page, which is handy for notes and docs.",
+      },
+      {
+        q: "Will it read text from a scanned PDF?",
+        a: "Only if the scan already has a text layer (for example, one made searchable with OCR). A pure image scan has no extractable text — run it through the OCR PDF tool first.",
+      },
+      { q: "Is my PDF uploaded to extract the text?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["pdf-to-word", "ocr", "compare"],
+  },
+
+  "extract-images": {
+    title: "Extract Images from PDF Online Free — Save Embedded Pictures, No Upload",
+    description:
+      "Pull the embedded images out of a PDF and download them as a zip. Free, private, and processed entirely in your browser.",
+    intro: [
+      "Save every picture embedded in a PDF without screenshotting. Drop your file in and the tool finds the raster images on each page and hands them back as individual files, bundled into a zip when there's more than one.",
+      "JPEG images come out losslessly as .jpg (the exact bytes stored in the PDF); simple uncompressed images are rebuilt as .png. Everything happens locally — your PDF is never uploaded.",
+    ],
+    faqs: [
+      {
+        q: "In what format do the images come out?",
+        a: "JPEG-encoded images are saved as .jpg with no quality loss. Simple RGB/grayscale bitmaps are saved as .png. Multiple images download together as a zip.",
+      },
+      {
+        q: "Why didn't it find any images?",
+        a: "The PDF may contain only vector graphics or text (nothing to extract), or its images use a color format this tool doesn't decode yet (such as CMYK or indexed color). Vector art and page text are not extracted as images.",
+      },
+      { q: "Are my images uploaded anywhere?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["pdf-to-jpg", "compress", "images-to-pdf"],
+  },
+
+  crop: {
+    title: "Crop PDF Online Free — Trim Page Margins Visually, No Upload",
+    description:
+      "Crop a PDF by drawing a box on the page to trim margins or whitespace. Free, no signup, and your file never leaves your browser.",
+    intro: [
+      "Trim the margins off a PDF without a design app. Drag a crop box over the page preview, size it to exactly the area you want to keep, and every page is cropped to match on download. Great for removing scanner borders, wide margins, or slide whitespace.",
+      "Cropping sets each page's crop box locally in your browser — the content stays intact (nothing is deleted), and your PDF is never uploaded.",
+    ],
+    faqs: [
+      {
+        q: "Does cropping delete the content outside the box?",
+        a: "No. It sets the page's visible crop area, so the trimmed margins simply aren't shown or printed. The underlying content is preserved, which keeps the operation safe and reversible.",
+      },
+      {
+        q: "Is the same crop applied to every page?",
+        a: "Yes — the box you draw is applied to all pages, which works best when the pages share the same size and layout.",
+      },
+      { q: "Is my PDF uploaded to crop it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["organize", "rotate", "extract"],
+  },
+
+  "edit-metadata": {
+    title: "Edit PDF Metadata Online Free — Change Title, Author & Keywords, No Upload",
+    description:
+      "View and edit a PDF's title, author, subject and keywords. Free, private, and processed entirely in your browser.",
+    intro: [
+      "Fix the document properties that show up in readers, search results, and file managers. The current title, author, subject, and keywords are pre-filled from your PDF — edit any of them and download the updated file.",
+      "Everything runs locally in your browser, so your document is never uploaded. Handy for correcting a wrong author, adding keywords for searchability, or clearing metadata before sharing.",
+    ],
+    faqs: [
+      {
+        q: "Which metadata fields can I change?",
+        a: "Title, Author, Subject, and Keywords. Enter keywords as a comma-separated list. Leave a field blank to clear it.",
+      },
+      {
+        q: "Does this remove hidden metadata?",
+        a: "It edits the standard document-information fields. To clear a value, empty the field before applying. It does not strip XMP or other embedded metadata streams.",
+      },
+      { q: "Is my PDF uploaded to edit its metadata?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["edit", "compress", "protect"],
+  },
+
   compare: {
     title: "Compare Two PDFs Online Free — Find Text Differences Privately",
     description:

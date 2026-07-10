@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompareTool } from "@/components/editor/CompareTool";
+import { CropTool } from "@/components/editor/CropTool";
 import { EditTool } from "@/components/editor/EditTool";
+import { FillFormTool } from "@/components/editor/FillFormTool";
+import { MetadataTool } from "@/components/editor/MetadataTool";
 import { RedactTool } from "@/components/editor/RedactTool";
 import { SignTool } from "@/components/editor/SignTool";
 import { OrganizeTool } from "@/components/OrganizeTool";
@@ -21,6 +24,9 @@ const CUSTOM_UIS = {
   sign: SignTool,
   compare: CompareTool,
   redact: RedactTool,
+  fillform: FillFormTool,
+  crop: CropTool,
+  metadata: MetadataTool,
 } as const;
 
 export function generateStaticParams() {

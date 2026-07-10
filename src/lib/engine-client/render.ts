@@ -83,6 +83,35 @@ export async function pdfToJpg(
   return outputs;
 }
 
+/**
+ * Extract a PDF's text to a .txt or Markdown file. Uses the pdfjs text layer
+ * (main thread, no canvas needed). Markdown adds a document title and a
+ * "## Page N" heading per page.
+ */
+export async function pdfToText(
+  files: EngineFile[],
+  options: EngineOptions,
+): Promise<EngineFile[]> {
+  const md = String(options.format ?? "txt") === "md";
+  const outputs: EngineFile[] = [];
+  for (const file of files) {
+    const pages = await extractPageLines(file.data);
+    const base = baseName(file.name);
+    const body = md
+      ? `# ${base}\n\n` +
+        pages
+          .map((lines, i) => `## Page ${i + 1}\n\n${lines.join("\n")}`)
+          .join("\n\n")
+      : pages.map((lines) => lines.join("\n")).join("\n\n");
+    outputs.push({
+      name: `${base}.${md ? "md" : "txt"}`,
+      data: new TextEncoder().encode(body),
+      mime: md ? "text/markdown" : "text/plain",
+    });
+  }
+  return outputs;
+}
+
 /** Extract text lines per page (for the compare tool). */
 export async function extractPageLines(data: Uint8Array): Promise<string[][]> {
   const doc = await loadDocument(data);

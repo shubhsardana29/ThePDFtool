@@ -60,5 +60,10 @@ export async function runClientTool(
     const { pdfToJpg } = await import("./render");
     return pdfToJpg(files, options);
   }
+  if (tool.id === "pdf-to-text") {
+    // Uses the pdfjs text layer — main thread, like pdf-to-jpg.
+    const { pdfToText } = await import("./render");
+    return pdfToText(files, options);
+  }
   return runInWorker(tool.id, files, options);
 }

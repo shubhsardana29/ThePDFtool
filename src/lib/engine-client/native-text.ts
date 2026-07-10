@@ -23,6 +23,7 @@ import {
   moveText,
   popGraphicsState,
   pushGraphicsState,
+  rotateAndSkewTextDegreesAndTranslate,
   setFillingRgbColor,
   setFontAndSize,
   showText,
@@ -187,19 +188,29 @@ export function prepareNativeText(
   }
 }
 
-/** Show prepared text at (x, baselineY) — PDF bottom-left origin points. */
+/**
+ * Show prepared text at (x, baselineY) — PDF bottom-left origin points. On a
+ * rotated page, pass `rotate` (0/90/180/270) so the text reads upright in the
+ * display, matching how flatten rotates every other drawn overlay.
+ */
 export function drawNativeText(
   page: PDFPage,
   prepared: PreparedNativeText,
-  opts: { x: number; baselineY: number; size: number; colorHex: string },
+  opts: { x: number; baselineY: number; size: number; colorHex: string; rotate?: number },
 ): void {
   const { r, g, b } = hexToRgb(opts.colorHex);
+  const rot = ((opts.rotate ?? 0) % 360 + 360) % 360;
+  // Rotation 0 keeps the plain Td move so un-rotated output is unchanged.
+  const positionOp =
+    rot === 0
+      ? moveText(opts.x, opts.baselineY)
+      : rotateAndSkewTextDegreesAndTranslate(rot, 0, 0, opts.x, opts.baselineY);
   page.pushOperators(
     pushGraphicsState(),
     beginText(),
     setFillingRgbColor(r, g, b),
     setFontAndSize(PDFName.of(prepared.resName), opts.size),
-    moveText(opts.x, opts.baselineY),
+    positionOp,
     showText(PDFHexString.of(prepared.hex)),
     endText(),
     popGraphicsState(),
