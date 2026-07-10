@@ -1,17 +1,26 @@
 # PDF Tools
 
-A self-hostable iLovePDF-style web app: 23 PDF tools with a hybrid processing
+A self-hostable iLovePDF-style web app: 34 PDF tools with a hybrid processing
 model — simple operations run entirely in the browser (files never leave the
 device), heavy operations run through a job queue on the server and are
 auto-deleted within an hour.
 
 ## Tools
 
-**Client-side** (private by design): merge, split, extract pages, rotate,
-organize, watermark, page numbers, JPG→PDF, PDF→JPG, edit (text/boxes/
-highlights/images), sign, compare, redact.
+**Client-side** (private by design — 24 tools):
 
-**Server-side** (Docker engines): compress, Office→PDF, PDF→Word,
+- Organize: merge, split, extract pages, delete pages, rotate, organize
+  (visual reorder), crop, N-up (pages per sheet)
+- Convert: JPG→PDF, PDF→JPG, PDF→Text/Markdown, PDF→Excel/CSV, extract images
+- Edit: edit (inline text / boxes / highlights / images), replace image, sign,
+  fill forms, redact, watermark, page numbers, Bates numbering, edit metadata,
+  compare
+- Optimize: grayscale
+
+The editor (edit / sign / redact / fill forms) works on rotated (`/Rotate`)
+pages: detection, overlays, and exports are all rotation-aware.
+
+**Server-side** (Docker engines — 10 tools): compress, Office→PDF, PDF→Word,
 PDF→PowerPoint, HTML→PDF, protect, unlock, OCR, repair, PDF/A.
 
 ## Development
@@ -80,6 +89,7 @@ sitemap at `/sitemap.xml`.
 
 ## Not yet built
 
-PDF→Excel (needs real table extraction), Stripe/premium billing, i18n,
-S3/R2 storage backend (single-host disk storage today), cryptographic
-signatures (signing is visual).
+Stripe/premium billing, i18n, S3/R2 storage backend (single-host disk storage
+today), cryptographic signatures (signing is visual), OCR-in-editor (editing
+scanned/image-only PDFs inline). PDF→Excel is heuristic (text-layer table
+detection), so complex layouts may need cleanup.

@@ -1,6 +1,6 @@
 # System Design — PDF Tools
 
-A self-hostable iLovePDF-style web application: 23 PDF tools behind one
+A self-hostable iLovePDF-style web application: 34 PDF tools behind one
 generic UI, with a hybrid processing model that keeps most files on the
 user's device and runs the rest through a queued, containerized pipeline.
 
@@ -13,7 +13,7 @@ For run instructions see `README.md`.
 
 | Goal | Consequence in the design |
 |---|---|
-| Privacy first | Everything that *can* run in the browser does. 13 of 23 tools never upload anything. |
+| Privacy first | Everything that *can* run in the browser does. 24 of 34 tools never upload anything. |
 | One person can operate it | Single-host Docker Compose deploy; no managed services required beyond a VPS. |
 | Adding a tool must be cheap | Tool = registry entry + one processor function. UI, validation, and transport are generic. |
 | Untrusted input everywhere | Uploads are validated by magic bytes, filenames are never trusted, engines are shelled with argument arrays only. |
@@ -92,9 +92,10 @@ Adding a tool means one registry entry plus one processor function (client:
 add to `PDFLIB_OPS`; server: add to `SERVER_OPS` + an entry in
 `TOOL_INPUT_EXTS`). Nothing else changes.
 
-Five tools (edit, sign, organize, compare, redact) opt out of the generic
-runner via `customUI` — they share the same engine layer but bring their own
-interaction model (page canvases + overlay editing).
+Nine tools (edit, sign, organize, compare, redact, fill forms, crop, edit
+metadata, replace image) opt out of the generic runner via `customUI` — they
+share the same engine layer but bring their own interaction model (page
+canvases + overlay editing, gallery pickers, prefilled forms).
 
 ## 4. Client-side processing path
 
@@ -106,16 +107,18 @@ Two execution contexts, chosen by what the operation needs:
    dispatches on tool id through `PDFLIB_OPS`.
 
 2. **Main thread** (`src/lib/engine-client/render.ts`) — anything that needs
-   canvas: PDF→JPG, page thumbnails, compare's text extraction, redaction
-   rasterization. pdfjs already runs its own internal worker for parsing;
-   only the canvas paint happens on the main thread.
+   pdfjs rendering or the text layer: PDF→JPG, page thumbnails, grayscale and
+   redaction rasterization, and text-layer extraction (compare, PDF→Text,
+   PDF→Excel table detection). pdfjs already runs its own internal worker for
+   parsing; only canvas paint / text reads happen on the main thread.
 
-The **edit/sign flatten** pipeline is the interesting composite: the UI keeps
-overlay items (text/box/highlight/image) as plain data in *PDF points with a
-top-left origin*, the natural CSS coordinate space. The `flatten` op in the
-worker converts to PDF's bottom-left origin and stamps items with pdf-lib.
-Because items are serializable data, the same op serves both tools and is
-unit-testable in Node.
+The **edit/sign/fill-form flatten** pipeline is the interesting composite: the
+UI keeps overlay items (text/box/highlight/image/form-field) as plain data in
+*displayed PDF points with a top-left origin*, the natural CSS coordinate space.
+The `flatten` op in the worker maps to PDF's bottom-left, unrotated space via
+`page-rotate.ts` (so overlays, form fields, and inline text edits land correctly
+on `/Rotate` pages) and stamps items with pdf-lib. Because items are
+serializable data, one op serves every editor tool and is unit-testable in Node.
 
 **Redaction** is deliberately destructive: pages are re-rendered to bitmaps,
 boxes are painted onto the pixels, and the PDF is rebuilt from images. The
@@ -254,8 +257,8 @@ admin.
 ## 9. Scaling path (deliberately not built yet)
 
 Current capacity: one VPS, worker concurrency 2, LibreOffice conversions
-~5–60 s, everything else seconds. That serves a lot of traffic given 13 of
-23 tools consume zero server resources.
+~5–60 s, everything else seconds. That serves a lot of traffic given 24 of
+34 tools consume zero server resources.
 
 When it outgrows one box, in order:
 
@@ -276,12 +279,14 @@ bucket if not.
 
 ## 10. Known limitations
 
-- **Page rotation flags**: edit/sign overlays don't compensate for pages with
-  `/Rotate` — items land rotated on such pages.
-- **PDF→Office fidelity**: LibreOffice's pdfimport produces positioned text
-  frames, not reflowing paragraphs. Labeled "best effort" in the UI.
-  PDF→Excel is absent — it needs genuine table extraction, a different class
-  of problem.
+- **Editing scanned PDFs**: inline text editing needs a text layer; image-only
+  scans yield nothing to edit until run through OCR first. OCR is a separate
+  server tool, not wired into the editor. Non-Latin scripts (CJK/Arabic) also
+  aren't renderable for inline text edits yet.
+- **PDF→Office / →Excel fidelity**: LibreOffice's pdfimport produces positioned
+  text frames, not reflowing paragraphs ("best effort" in the UI). PDF→Excel is
+  a client-side heuristic over the text layer (row/column grouping by position),
+  so complex or irregular tables may need manual cleanup.
 - **Pathological documents** can pin Gotenberg's LibreOffice for up to 2 min;
   jobs fail with a friendly message until its supervisor recycles the process.
 - **PDF/A output** is best-effort (no ICC profile embedding / veraPDF
