@@ -112,6 +112,96 @@ export async function pdfToText(
   return outputs;
 }
 
+/**
+ * Convert every page to grayscale by rendering to a bitmap, desaturating, and
+ * rebuilding the PDF from the images. Like the redact tool, this rasterizes the
+ * pages (text/vectors become images) — the trade-off for guaranteed grayscale
+ * output without a server-side color engine.
+ */
+export async function grayscalePdf(
+  files: EngineFile[],
+  options: EngineOptions,
+): Promise<EngineFile[]> {
+  const { PDFDocument } = await import("pdf-lib");
+  const scale = parseInt(String(options.dpi ?? "150"), 10) / 72;
+  const outputs: EngineFile[] = [];
+  for (const file of files) {
+    const doc = await loadDocument(file.data);
+    const out = await PDFDocument.create();
+    for (let p = 1; p <= doc.numPages; p++) {
+      const canvas = await renderPage(doc, p, scale);
+      const gray = document.createElement("canvas");
+      gray.width = canvas.width;
+      gray.height = canvas.height;
+      const gctx = gray.getContext("2d");
+      if (!gctx) throw new Error("Canvas 2D context unavailable");
+      gctx.filter = "grayscale(100%)";
+      gctx.drawImage(canvas, 0, 0);
+      const blob = await canvasToJpeg(gray, 0.9);
+      const image = await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+      const page = out.addPage([canvas.width / scale, canvas.height / scale]);
+      page.drawImage(image, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+    }
+    await doc.loadingTask.destroy();
+    outputs.push({
+      name: `${baseName(file.name)}-grayscale.pdf`,
+      data: await out.save(),
+      mime: "application/pdf",
+    });
+  }
+  return outputs;
+}
+
+/**
+ * Extract tabular data from a PDF's text layer into CSV or XLSX. Heuristic
+ * (see table-extract.ts) — best for grid-like content. One sheet/CSV per page.
+ */
+export async function pdfToTable(
+  files: EngineFile[],
+  options: EngineOptions,
+): Promise<EngineFile[]> {
+  const { groupIntoTable, toCsv, buildXlsx } = await import("./table-extract");
+  const format = String(options.format ?? "xlsx");
+  const outputs: EngineFile[] = [];
+  for (const file of files) {
+    const doc = await loadDocument(file.data);
+    const base = baseName(file.name);
+    const sheets: { name: string; rows: string[][] }[] = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const content = await (await doc.getPage(p)).getTextContent();
+      const items = content.items
+        .filter((i): i is typeof i & { str: string; transform: number[] } => "str" in i)
+        .map((i) => ({ str: i.str, x: i.transform[4], y: i.transform[5] }));
+      sheets.push({ name: `Page ${p}`, rows: groupIntoTable(items) });
+    }
+    await doc.loadingTask.destroy();
+
+    if (format === "xlsx") {
+      outputs.push({
+        name: `${base}.xlsx`,
+        data: buildXlsx(sheets),
+        mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+    } else if (sheets.length === 1) {
+      outputs.push({
+        name: `${base}.csv`,
+        data: new TextEncoder().encode(toCsv(sheets[0].rows)),
+        mime: "text/csv",
+      });
+    } else {
+      const pad = String(sheets.length).length;
+      sheets.forEach((s, i) =>
+        outputs.push({
+          name: `${base}-page-${String(i + 1).padStart(pad, "0")}.csv`,
+          data: new TextEncoder().encode(toCsv(s.rows)),
+          mime: "text/csv",
+        }),
+      );
+    }
+  }
+  return outputs;
+}
+
 /** Extract text lines per page (for the compare tool). */
 export async function extractPageLines(data: Uint8Array): Promise<string[][]> {
   const doc = await loadDocument(data);

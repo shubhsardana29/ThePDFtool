@@ -355,6 +355,28 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
     related: ["pdf-to-word", "ocr", "compare"],
   },
 
+  "pdf-to-excel": {
+    title: "PDF to Excel Online Free — Convert PDF Tables to XLSX/CSV, No Upload",
+    description:
+      "Turn PDF tables into an Excel workbook or CSV, right in your browser. Free, no signup, and your file is never uploaded.",
+    intro: [
+      "Get tabular data out of a PDF without retyping it. The tool reads the document's text layer, groups it into rows and columns by position, and hands you an .xlsx workbook (one sheet per page) or CSV files. Ideal for statements, reports, and exported tables.",
+      "Everything runs locally in your browser. Because it works from the text layer, extraction is best-effort on grid-like tables — very irregular or merged layouts may need a little cleanup, but your data never leaves your device.",
+    ],
+    faqs: [
+      {
+        q: "Does it work on scanned PDFs?",
+        a: "Only if the scan has a text layer (e.g. after OCR). A pure image scan has no text to read — run it through the OCR PDF tool first.",
+      },
+      {
+        q: "Why are some columns merged or split?",
+        a: "Columns are inferred from the horizontal position of the text. Tightly-spaced or irregular tables can occasionally group differently than expected; the CSV/XLSX is easy to tidy up afterwards.",
+      },
+      { q: "Is my PDF uploaded to convert it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["pdf-to-text", "pdf-to-word", "extract"],
+  },
+
   "extract-images": {
     title: "Extract Images from PDF Online Free — Save Embedded Pictures, No Upload",
     description:
@@ -419,6 +441,116 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
       { q: "Is my PDF uploaded to edit its metadata?", a: "No. " + PRIVATE_NOTE },
     ],
     related: ["edit", "compress", "protect"],
+  },
+
+  "replace-image": {
+    title: "Replace Image in PDF Online Free — Swap Pictures, No Upload",
+    description:
+      "Swap an existing image in a PDF for a new one, in exactly the same position. Free, private, and processed in your browser.",
+    intro: [
+      "Update a logo, headshot, or diagram without rebuilding the document. The tool finds the images embedded in your PDF and shows them as thumbnails — pick one, upload a replacement, and it takes the original's place at the same position and size on every page it appears.",
+      "Everything runs locally in your browser: the original image is swapped out and the new one embedded on your own machine, so nothing is uploaded.",
+    ],
+    faqs: [
+      {
+        q: "Will the new image be positioned correctly?",
+        a: "Yes. The replacement reuses the original image's placement, so it lands in the same spot at the same size. If your new image has a different aspect ratio, it will stretch to fill that area.",
+      },
+      {
+        q: "Why isn't a particular image listed?",
+        a: "Only raster images the tool can decode are shown. Vector graphics, and images in formats it doesn't preview yet (e.g. CMYK or indexed color), won't appear.",
+      },
+      { q: "Is my PDF uploaded to replace an image?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["edit", "extract-images", "sign"],
+  },
+
+  "delete-pages": {
+    title: "Delete Pages from PDF Online Free — Remove Pages, No Upload",
+    description:
+      "Remove specific pages from a PDF by number or range. Free, no signup, and your file never leaves your browser.",
+    intro: [
+      "Drop off unwanted pages without rebuilding the whole document. Type the pages to remove — single numbers, ranges, or a mix like “1, 3, 5-8” — and download a PDF with just the pages you kept, in their original order and quality.",
+      "It all runs locally in your browser, so even confidential documents stay private. For visual drag-and-drop reordering and deletion, use the Organize tool instead.",
+    ],
+    faqs: [
+      {
+        q: "How do I choose which pages to delete?",
+        a: "Enter page numbers and ranges separated by commas, e.g. “1, 3, 5-8”. Everything else is kept.",
+      },
+      {
+        q: "What's the difference from the Organize tool?",
+        a: "Organize gives you a visual thumbnail grid to drag, reorder, and delete pages. Delete Pages is a faster path when you already know the page numbers to remove.",
+      },
+      { q: "Is my PDF uploaded to delete pages?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["organize", "extract", "split"],
+  },
+
+  "n-up": {
+    title: "N-up PDF Online Free — Multiple Pages per Sheet, No Upload",
+    description:
+      "Put 2, 4, or 6 PDF pages on a single sheet for handouts and thumbnails. Free, private, processed in your browser.",
+    intro: [
+      "Fit several pages onto one for compact handouts, contact sheets, or booklets. Choose 2, 4, or 6 pages per sheet and each page is scaled to fit its cell while keeping its aspect ratio. Great for saving paper when printing slides or drafts.",
+      "Everything is composed locally with pdf-lib in your browser — nothing is uploaded, and the page content stays vector-sharp (it isn't flattened to an image).",
+    ],
+    faqs: [
+      {
+        q: "How are the pages arranged?",
+        a: "2-up places two pages side by side on a landscape sheet; 4-up uses a 2×2 grid; 6-up uses a 2×3 grid. Pages keep their aspect ratio inside each cell.",
+      },
+      {
+        q: "Does it reduce quality?",
+        a: "No. Pages are embedded as scaled vector content, not rasterized, so text and lines stay crisp.",
+      },
+      { q: "Is my PDF uploaded?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["organize", "merge", "extract"],
+  },
+
+  bates: {
+    title: "Bates Numbering PDF Online Free — Legal Page Stamps, No Upload",
+    description:
+      "Stamp sequential Bates numbers (e.g. ABC-000123) on every page of a PDF. Free, private, and runs in your browser.",
+    intro: [
+      "Add Bates numbers for legal discovery, exhibits, or record-keeping. Set an optional prefix, a starting number, and zero-padding width, and every page gets a consistent sequential stamp — for example “ABC-000123”. Choose where the stamp sits along the bottom of the page.",
+      "The stamping happens entirely in your browser, so sensitive case files are never uploaded to a server.",
+    ],
+    faqs: [
+      {
+        q: "What format do the numbers use?",
+        a: "Your prefix followed by a zero-padded sequence number, e.g. prefix “ABC-”, start 1, and 6 digits produces ABC-000001, ABC-000002, and so on.",
+      },
+      {
+        q: "Can I control the starting number and padding?",
+        a: "Yes — set any starting number and choose how many digits to zero-pad to (1–12).",
+      },
+      { q: "Are my documents uploaded to add Bates numbers?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["page-numbers", "watermark", "edit"],
+  },
+
+  grayscale: {
+    title: "Grayscale PDF Online Free — Convert PDF to Black & White, No Upload",
+    description:
+      "Convert a color PDF to grayscale for cheaper printing. Free, no signup, and your file never leaves your browser.",
+    intro: [
+      "Turn a color PDF black-and-white in one click — handy for lower-cost printing or a cleaner look. Every page is converted to grayscale and the file downloads ready to print.",
+      "Conversion runs locally in your browser. Note that pages are rendered to grayscale images during conversion, so the output is a raster version of your document (selectable text becomes part of the image).",
+    ],
+    faqs: [
+      {
+        q: "Will the text still be selectable afterwards?",
+        a: "No. To guarantee a fully grayscale result without a server, each page is rendered to a grayscale image, so text and vectors become part of that image. Choose a higher resolution for sharper output.",
+      },
+      {
+        q: "Which resolution should I pick?",
+        a: "150 dpi is a good default. Use 300 dpi for printing, or 72 dpi for a smaller on-screen file.",
+      },
+      { q: "Is my PDF uploaded to convert it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["compress", "pdf-to-jpg", "edit"],
   },
 
   compare: {

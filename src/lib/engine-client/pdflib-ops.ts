@@ -1,5 +1,7 @@
 import {
+  PDFDict,
   PDFDocument,
+  PDFName,
   StandardFonts,
   degrees,
   rgb,
@@ -51,6 +53,120 @@ export const crop: EngineOp = async ([file], options) => {
     }
   }
   return [pdfFile(`${baseName(file.name)}-cropped.pdf`, await doc.save())];
+};
+
+export const deletePages: EngineOp = async ([file], options) => {
+  const src = await PDFDocument.load(file.data);
+  const count = src.getPageCount();
+  const remove = new Set(parsePageRanges(String(options.pages ?? ""), count));
+  if (remove.size === 0) throw new Error("No pages selected to delete");
+  if (remove.size >= count) throw new Error("Cannot delete every page");
+  const keep: number[] = [];
+  for (let i = 0; i < count; i++) if (!remove.has(i)) keep.push(i);
+  const out = await PDFDocument.create();
+  const pages = await out.copyPages(src, keep);
+  pages.forEach((p) => out.addPage(p));
+  return [pdfFile(`${baseName(file.name)}-pages-removed.pdf`, await out.save())];
+};
+
+// [cols, rows, orientation] per pages-per-sheet.
+const NUP_GRID: Record<number, [number, number, "landscape" | "portrait" | "source"]> = {
+  2: [2, 1, "landscape"],
+  4: [2, 2, "source"],
+  6: [2, 3, "portrait"],
+};
+
+export const nUp: EngineOp = async ([file], options) => {
+  const per = Number(options.perSheet ?? 2);
+  const [cols, rows, orient] = NUP_GRID[per] ?? NUP_GRID[2];
+  const src = await PDFDocument.load(file.data);
+  const srcPages = src.getPages();
+  const out = await PDFDocument.create();
+  const embedded = await out.embedPages(srcPages);
+
+  const first = srcPages[0].getSize();
+  const long = Math.max(first.width, first.height);
+  const short = Math.min(first.width, first.height);
+  const sheetW = orient === "landscape" ? long : orient === "portrait" ? short : first.width;
+  const sheetH = orient === "landscape" ? short : orient === "portrait" ? long : first.height;
+
+  const margin = 18;
+  const gap = 10;
+  const cellW = (sheetW - 2 * margin - (cols - 1) * gap) / cols;
+  const cellH = (sheetH - 2 * margin - (rows - 1) * gap) / rows;
+
+  for (let start = 0; start < embedded.length; start += per) {
+    const page = out.addPage([sheetW, sheetH]);
+    for (let k = 0; k < per && start + k < embedded.length; k++) {
+      const ep = embedded[start + k];
+      const scale = Math.min(cellW / ep.width, cellH / ep.height);
+      const w = ep.width * scale;
+      const h = ep.height * scale;
+      const col = k % cols;
+      const row = Math.floor(k / cols);
+      const x = margin + col * (cellW + gap) + (cellW - w) / 2;
+      const yTop = margin + row * (cellH + gap);
+      const y = sheetH - yTop - cellH + (cellH - h) / 2;
+      page.drawPage(ep, { x, y, width: w, height: h });
+    }
+  }
+  return [pdfFile(`${baseName(file.name)}-nup.pdf`, await out.save())];
+};
+
+function dataUrlBytes(dataUrl: string): { bytes: Uint8Array; png: boolean } {
+  const [head, body] = dataUrl.split(",", 2);
+  const bin = atob(body ?? "");
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return { bytes, png: head.includes("image/png") };
+}
+
+/**
+ * Swap existing images. options.replacements: [{ sites:[{page,name}], dataUrl }].
+ * Repointing the page's XObject resource to a freshly embedded image means the
+ * existing `Do` operator draws the new image at the original position/size.
+ */
+export const replaceImage: EngineOp = async ([file], options) => {
+  const replacements = (options.replacements ?? []) as {
+    sites: { page: number; name: string }[];
+    dataUrl: string;
+  }[];
+  const doc = await PDFDocument.load(file.data);
+  const pages = doc.getPages();
+  for (const rep of replacements) {
+    if (!rep.dataUrl || rep.sites.length === 0) continue;
+    const { bytes, png } = dataUrlBytes(rep.dataUrl);
+    const image = png ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+    for (const site of rep.sites) {
+      const page = pages[site.page];
+      const xobjs = page?.node.Resources()?.lookup(PDFName.of("XObject"));
+      if (xobjs instanceof PDFDict) xobjs.set(PDFName.of(site.name), image.ref);
+    }
+  }
+  return [pdfFile(`${baseName(file.name)}-image-replaced.pdf`, await doc.save())];
+};
+
+export const bates: EngineOp = async ([file], options) => {
+  const prefix = String(options.prefix ?? "");
+  const start = Number(options.start ?? 1);
+  const digits = Math.max(1, Math.min(12, Number(options.digits ?? 6)));
+  const position = String(options.position ?? "bottom-right");
+  const doc = await PDFDocument.load(file.data);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  doc.getPages().forEach((page, i) => {
+    const label = `${prefix}${String(start + i).padStart(digits, "0")}`;
+    const size = 10;
+    const tw = font.widthOfTextAtSize(label, size);
+    const { width } = page.getSize();
+    const x =
+      position === "bottom-left"
+        ? 40
+        : position === "bottom-center"
+          ? (width - tw) / 2
+          : width - 40 - tw;
+    page.drawText(label, { x, y: 20, size, font, color: rgb(0, 0, 0) });
+  });
+  return [pdfFile(`${baseName(file.name)}-bates.pdf`, await doc.save())];
 };
 
 export const merge: EngineOp = async (files) => {
@@ -252,6 +368,10 @@ export const PDFLIB_OPS: Record<string, EngineOp> = {
   "extract-images": extractImages,
   "edit-metadata": editMetadata,
   crop,
+  "delete-pages": deletePages,
+  "n-up": nUp,
+  bates,
+  "replace-image": replaceImage,
   // edit and sign both stamp overlay items onto the document;
   // fill-form fills AcroForm fields (also via the flatten op)
   edit: flatten,

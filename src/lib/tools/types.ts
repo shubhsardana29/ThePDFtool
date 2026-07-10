@@ -53,7 +53,8 @@ export interface ToolDefinition {
     | "redact"
     | "fillform"
     | "crop"
-    | "metadata";
+    | "metadata"
+    | "replaceimage";
 }
 
 export const PDF_ACCEPT: Record<string, string[]> = {

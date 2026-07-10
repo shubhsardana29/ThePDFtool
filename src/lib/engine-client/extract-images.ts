@@ -121,6 +121,46 @@ function channelsFor(dict: PDFDict): 1 | 3 | null {
   return null;
 }
 
+export interface DecodedImage {
+  ext: "jpg" | "jp2" | "png";
+  mime: string;
+  data: Uint8Array;
+}
+
+/** Decode one image XObject to a browser-friendly format, or null if unsupported. */
+export function decodeXObjectImage(xobj: PDFRawStream): DecodedImage | null {
+  const dict = xobj.dict;
+  if (dict.lookup(PDFName.of("Subtype"))?.toString() !== "/Image") return null;
+  const filters = filterNames(dict);
+
+  if (filters.includes("/DCTDecode")) {
+    return { ext: "jpg", mime: "image/jpeg", data: xobj.contents };
+  }
+  if (filters.includes("/JPXDecode")) {
+    return { ext: "jp2", mime: "image/jp2", data: xobj.contents };
+  }
+  const width = num(dict, "Width");
+  const height = num(dict, "Height");
+  if (
+    filters.includes("/FlateDecode") &&
+    !dict.lookup(PDFName.of("DecodeParms")) &&
+    num(dict, "BitsPerComponent") === 8 &&
+    width &&
+    height
+  ) {
+    const channels = channelsFor(dict);
+    if (!channels) return null;
+    try {
+      const samples = decodePDFRawStream(xobj).decode();
+      if (samples.length < width * height * channels) return null;
+      return { ext: "png", mime: "image/png", data: encodePng(samples, width, height, channels) };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export const extractImages: EngineOp = async ([file]) => {
   const doc = await PDFDocument.load(file.data);
   const base = baseName(file.name);
@@ -136,54 +176,15 @@ export const extractImages: EngineOp = async ([file]) => {
     for (const key of xobjects.keys()) {
       const xobj = xobjects.lookup(key);
       if (!(xobj instanceof PDFRawStream) || seen.has(xobj)) continue;
-      const dict = xobj.dict;
-      if (dict.lookup(PDFName.of("Subtype"))?.toString() !== "/Image") continue;
       seen.add(xobj);
-
-      const filters = filterNames(dict);
-      const width = num(dict, "Width");
-      const height = num(dict, "Height");
+      const decoded = decodeXObjectImage(xobj);
+      if (!decoded) continue;
       const n = ++index;
-      const pad = (s: number) => String(s).padStart(3, "0");
-
-      if (filters.includes("/DCTDecode")) {
-        outputs.push({
-          name: `${base}-image-${pad(n)}.jpg`,
-          data: xobj.contents,
-          mime: "image/jpeg",
-        });
-        continue;
-      }
-      if (filters.includes("/JPXDecode")) {
-        outputs.push({
-          name: `${base}-image-${pad(n)}.jp2`,
-          data: xobj.contents,
-          mime: "image/jp2",
-        });
-        continue;
-      }
-      // FlateDecode raw bitmap → PNG, only for the simple, predictor-free case.
-      if (
-        filters.includes("/FlateDecode") &&
-        !dict.lookup(PDFName.of("DecodeParms")) &&
-        num(dict, "BitsPerComponent") === 8 &&
-        width &&
-        height
-      ) {
-        const channels = channelsFor(dict);
-        if (!channels) continue;
-        try {
-          const samples = decodePDFRawStream(xobj).decode();
-          if (samples.length < width * height * channels) continue;
-          outputs.push({
-            name: `${base}-image-${pad(n)}.png`,
-            data: encodePng(samples, width, height, channels),
-            mime: "image/png",
-          });
-        } catch {
-          // undecodable — skip
-        }
-      }
+      outputs.push({
+        name: `${base}-image-${String(n).padStart(3, "0")}.${decoded.ext}`,
+        data: decoded.data,
+        mime: decoded.mime,
+      });
     }
   }
 

@@ -65,5 +65,15 @@ export async function runClientTool(
     const { pdfToText } = await import("./render");
     return pdfToText(files, options);
   }
+  if (tool.id === "grayscale") {
+    // Rasterizes each page via canvas — main thread.
+    const { grayscalePdf } = await import("./render");
+    return grayscalePdf(files, options);
+  }
+  if (tool.id === "pdf-to-excel") {
+    // Uses the pdfjs text layer — main thread.
+    const { pdfToTable } = await import("./render");
+    return pdfToTable(files, options);
+  }
   return runInWorker(tool.id, files, options);
 }

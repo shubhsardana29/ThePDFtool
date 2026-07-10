@@ -7,6 +7,7 @@ import { EditTool } from "@/components/editor/EditTool";
 import { FillFormTool } from "@/components/editor/FillFormTool";
 import { MetadataTool } from "@/components/editor/MetadataTool";
 import { RedactTool } from "@/components/editor/RedactTool";
+import { ReplaceImageTool } from "@/components/editor/ReplaceImageTool";
 import { SignTool } from "@/components/editor/SignTool";
 import { OrganizeTool } from "@/components/OrganizeTool";
 import { ToolRunner } from "@/components/ToolRunner";
@@ -27,6 +28,7 @@ const CUSTOM_UIS = {
   fillform: FillFormTool,
   crop: CropTool,
   metadata: MetadataTool,
+  replaceimage: ReplaceImageTool,
 } as const;
 
 export function generateStaticParams() {
