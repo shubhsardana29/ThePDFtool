@@ -7,6 +7,7 @@ import { CropTool } from "@/components/editor/CropTool";
 import { EditTool } from "@/components/editor/EditTool";
 import { FillFormTool } from "@/components/editor/FillFormTool";
 import { MetadataTool } from "@/components/editor/MetadataTool";
+import { PipelineTool } from "@/components/editor/PipelineTool";
 import { RedactTool } from "@/components/editor/RedactTool";
 import { ReplaceImageTool } from "@/components/editor/ReplaceImageTool";
 import { SignTool } from "@/components/editor/SignTool";
@@ -33,6 +34,7 @@ const CUSTOM_UIS = {
   replaceimage: ReplaceImageTool,
   visualcompare: VisualCompareTool,
   annotate: AnnotateTool,
+  pipeline: PipelineTool,
 } as const;
 
 export function generateStaticParams() {

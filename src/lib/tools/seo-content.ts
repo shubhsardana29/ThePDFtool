@@ -654,6 +654,28 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
     related: ["n-up", "crop", "compress"],
   },
 
+  pipeline: {
+    title: "PDF Pipeline — Chain Multiple PDF Tools in One Workflow, No Upload",
+    description:
+      "Run several PDF operations in sequence — rotate, watermark, number, resize and more — in one pass. Free and fully in your browser.",
+    intro: [
+      "Stop downloading and re-uploading between tools. Stack the steps you need — say rotate, then add page numbers, then a watermark, then grayscale — and run them as one workflow; each step's output feeds straight into the next, and you download the final PDF once.",
+      "Every step runs in your browser, so the document is never uploaded. Reorder or remove steps freely, and set each step's options inline.",
+    ],
+    faqs: [
+      {
+        q: "Which tools can I chain?",
+        a: "The single-file, page-preserving tools: rotate, grayscale, watermark, page numbers, header/footer, Bates numbering, delete pages, N-up, resize, sanitize, and flatten. Each step takes one PDF and produces one PDF.",
+      },
+      {
+        q: "Does the order matter?",
+        a: "Yes — steps run top to bottom, so (for example) add page numbers before N-up if you want them on the original pages, or after to number the combined sheets. Use the arrows to reorder.",
+      },
+      { q: "Is my PDF uploaded to run a pipeline?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["organize", "merge", "compress"],
+  },
+
   annotate: {
     title: "Annotate PDF Online Free — Add Comments & Highlights, No Upload",
     description:
