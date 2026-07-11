@@ -57,7 +57,8 @@ export interface ToolDefinition {
     | "replaceimage"
     | "visualcompare"
     | "annotate"
-    | "pipeline";
+    | "pipeline"
+    | "batch";
 }
 
 export const PDF_ACCEPT: Record<string, string[]> = {

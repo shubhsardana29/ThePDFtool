@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AnnotateTool } from "@/components/editor/AnnotateTool";
+import { BatchTool } from "@/components/editor/BatchTool";
 import { CompareTool } from "@/components/editor/CompareTool";
 import { CropTool } from "@/components/editor/CropTool";
 import { EditTool } from "@/components/editor/EditTool";
@@ -35,6 +36,7 @@ const CUSTOM_UIS = {
   visualcompare: VisualCompareTool,
   annotate: AnnotateTool,
   pipeline: PipelineTool,
+  batch: BatchTool,
 } as const;
 
 export function generateStaticParams() {

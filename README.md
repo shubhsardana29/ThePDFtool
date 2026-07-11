@@ -1,17 +1,17 @@
 # PDF Tools
 
-A self-hostable iLovePDF-style web app: 43 PDF tools with a hybrid processing
+A self-hostable iLovePDF-style web app: 44 PDF tools with a hybrid processing
 model — simple operations run entirely in the browser (files never leave the
 device), heavy operations run through a job queue on the server and are
 auto-deleted within an hour.
 
 ## Tools
 
-**Client-side** (private by design — 32 tools):
+**Client-side** (private by design — 33 tools):
 
 - Organize: merge, split, extract pages, delete pages, rotate, organize
   (visual reorder), crop, N-up (pages per sheet), resize (A4/Letter),
-  pipeline (chain steps into one workflow)
+  pipeline (chain steps into one workflow), batch (one tool across many files)
 - Convert: JPG→PDF, PDF→JPG, PDF→PNG, PDF→Text/Markdown, PDF→Excel/CSV,
   extract images
 - Edit: edit (inline text / boxes / highlights / images), replace image, sign,

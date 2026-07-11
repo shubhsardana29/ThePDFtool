@@ -654,6 +654,28 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
     related: ["n-up", "crop", "compress"],
   },
 
+  batch: {
+    title: "Batch Process PDFs Online Free — Apply One Tool to Many, No Upload",
+    description:
+      "Run the same operation across many PDFs at once and download them as a zip. Free and fully in your browser.",
+    intro: [
+      "Apply one tool to a whole stack of PDFs in a single pass. Drop in as many files as you like, pick the operation — rotate, watermark, page numbers, grayscale, resize, sanitize and more — set its options once, and download every result bundled as a zip.",
+      "Each file is processed independently in your browser, so nothing is uploaded. Ideal for standardizing a folder of documents in one go.",
+    ],
+    faqs: [
+      {
+        q: "Which tools can I batch?",
+        a: "The single-file, page-preserving tools: rotate, grayscale, watermark, page numbers, header/footer, Bates numbering, delete pages, N-up, resize, sanitize, and flatten. The chosen options apply to every file.",
+      },
+      {
+        q: "How are the results delivered?",
+        a: "As a single zip containing one processed PDF per input file, keeping the original filenames.",
+      },
+      { q: "Are my PDFs uploaded to batch-process them?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["pipeline", "merge", "compress"],
+  },
+
   pipeline: {
     title: "PDF Pipeline — Chain Multiple PDF Tools in One Workflow, No Upload",
     description:
