@@ -1,9 +1,40 @@
-# PDF Tools
+<h1 align="center">📄 PDF Tools</h1>
 
-A self-hostable iLovePDF-style web app: 44 PDF tools with a hybrid processing
-model — simple operations run entirely in the browser (files never leave the
-device), heavy operations run through a job queue on the server and are
-auto-deleted within an hour.
+<p align="center">
+  <strong>Every PDF tool you need — and your files never leave your browser.</strong>
+</p>
+
+<p align="center">
+  <a href="https://thepdftool.in"><b>🔗 Live at thepdftool.in</b></a>
+</p>
+
+**44 free PDF tools** — merge, split, compress, convert, edit, sign, fill forms,
+OCR and more. **33 of them run entirely in your browser** (via `pdf-lib` and
+`pdf.js`), so your documents are never uploaded. No sign-up, no watermarks, no
+page limits. Open-source and self-hostable.
+
+> A private, open-source alternative to iLovePDF / Smallpdf.
+
+<!-- Add a screenshot to make this shine: ![PDF Tools](docs/screenshot.png) -->
+
+### Why it's different
+
+- 🔒 **Private by default** — most tools run 100% client-side. Turn off your
+  network after the page loads and merging, editing, even OCR still work; the
+  file stays on your device.
+- 🧰 **44 tools** across organize, convert, edit & sign, optimize, and security.
+- ✍️ **Real text editing** — inline edits genuinely remove the original text
+  from the PDF and redraw it in the document's own font, not a white box on top.
+- 🔤 **Client-side OCR** — turn scanned/image-only PDFs into editable text,
+  in-browser, with no upload.
+- 🧩 **Workflows** — chain tools into a **pipeline**, or **batch** one tool
+  across many files at once.
+- 🏠 **Self-hostable** — the whole stack is one `docker compose` deploy on a
+  single VPS (see [Production](#production)).
+
+For the handful of tools that need heavy engines (Office conversions, OCR
+service, encryption), files upload over an encrypted connection to a queued
+worker and are **auto-deleted within an hour**.
 
 ## Tools
 
