@@ -73,6 +73,7 @@ export function EditTool() {
     new Map(),
   );
   const [detecting, setDetecting] = useState(false);
+  const [ocrPages, setOcrPages] = useState<Set<number>>(new Set());
   const imageInput = useRef<HTMLInputElement>(null);
   const canvases = useRef(new Map<number, HTMLCanvasElement>());
 
@@ -212,6 +213,26 @@ export function EditTool() {
     snapshot();
     setItems((prev) => [...prev, item]);
     setSelectedId(item.id);
+  }
+
+  async function runOcr(pageIndex: number) {
+    const canvas = canvases.current.get(pageIndex);
+    if (!canvas || !pdf || ocrPages.has(pageIndex)) return;
+    setOcrPages((prev) => new Set(prev).add(pageIndex));
+    try {
+      const { ocrPageCanvas } = await import("@/lib/engine-client/ocr-client");
+      const size = pdf.sizes[pageIndex];
+      const lines = await ocrPageCanvas(canvas, pageIndex, size.w, size.h);
+      setDetected((prev) => new Map(prev).set(pageIndex, lines));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setOcrPages((prev) => {
+        const next = new Set(prev);
+        next.delete(pageIndex);
+        return next;
+      });
+    }
   }
 
   const onDrop = useCallback(
@@ -699,6 +720,22 @@ export function EditTool() {
                   onCommit={commitTextEdit}
                 />
               )}
+              {placing?.kind === "edit-text" &&
+                !detecting &&
+                (detected.get(pageIndex)?.length ?? 0) === 0 && (
+                  <div className="pointer-events-none absolute inset-0 flex items-start justify-center pt-4">
+                    <button
+                      type="button"
+                      onClick={() => runOcr(pageIndex)}
+                      disabled={ocrPages.has(pageIndex)}
+                      className="pointer-events-auto rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow hover:bg-blue-700 disabled:opacity-60"
+                    >
+                      {ocrPages.has(pageIndex)
+                        ? "Recognizing text…"
+                        : "No selectable text — run OCR on this page"}
+                    </button>
+                  </div>
+                )}
               {placing?.kind === "pen" && (
                 <PenLayer
                   pageIndex={pageIndex}

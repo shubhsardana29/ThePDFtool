@@ -279,10 +279,12 @@ bucket if not.
 
 ## 10. Known limitations
 
-- **Editing scanned PDFs**: inline text editing needs a text layer; image-only
-  scans yield nothing to edit until run through OCR first. OCR is a separate
-  server tool, not wired into the editor. Non-Latin scripts (CJK/Arabic) also
-  aren't renderable for inline text edits yet.
+- **Editing scanned PDFs**: inline text editing needs a text layer. Image-only
+  scans can now be OCR'd in-browser from the editor (tesseract.js, self-hosted
+  under `/public/tesseract`, English only), which populates editable lines;
+  edits then apply via the cover-and-redraw path since there's no stream text
+  to remove. Non-Latin scripts (CJK/Arabic) aren't renderable for inline edits
+  yet, and only the Latin language pack is bundled.
 - **PDF→Office / →Excel fidelity**: LibreOffice's pdfimport produces positioned
   text frames, not reflowing paragraphs ("best effort" in the UI). PDF→Excel is
   a client-side heuristic over the text layer (row/column grouping by position),

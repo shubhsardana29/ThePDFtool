@@ -94,6 +94,7 @@ sitemap at `/sitemap.xml`.
 ## Not yet built
 
 Stripe/premium billing, i18n, S3/R2 storage backend (single-host disk storage
-today), cryptographic signatures (signing is visual), OCR-in-editor (editing
-scanned/image-only PDFs inline). PDF→Excel is heuristic (text-layer table
-detection), so complex layouts may need cleanup.
+today), cryptographic signatures (signing is visual). PDF→Excel is heuristic
+(text-layer table detection), so complex layouts may need cleanup. The editor
+can now OCR scanned pages in-browser (tesseract.js) to make them editable, but
+only Latin script is bundled; CJK/Arabic inline editing is still unsupported.
