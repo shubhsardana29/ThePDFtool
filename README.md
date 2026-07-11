@@ -15,7 +15,9 @@ page limits. Open-source and self-hostable.
 
 > A private, open-source alternative to iLovePDF / Smallpdf.
 
-<!-- Add a screenshot to make this shine: ![PDF Tools](docs/screenshot.png) -->
+<p align="center">
+  <img src="docs/screenshot.png" alt="PDF Tools — 44 free, private PDF tools that run in your browser" width="820">
+</p>
 
 ### Why it's different
 
