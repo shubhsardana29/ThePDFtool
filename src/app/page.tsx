@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HeroArt } from "@/components/HeroArt";
+import { GUIDES } from "@/lib/guides/content";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { TOOLS } from "@/lib/tools/registry";
 import type { ToolCategory } from "@/lib/tools/types";
@@ -29,21 +30,58 @@ const CATEGORY_ORDER: ToolCategory[] = [
   "security",
 ];
 
-const WEBSITE_JSONLD = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: SITE_NAME,
-  url: SITE_URL,
-  description:
-    "Free online PDF tools that respect your privacy — most run entirely in your browser without uploading files.",
-};
+const HOME_FAQ = [
+  {
+    q: "Are these PDF tools free?",
+    a: "Yes — every tool is free with no sign-up, no watermarks, and no page or file-count limits hidden behind a paywall.",
+  },
+  {
+    q: "Do my files get uploaded?",
+    a: "Most tools run entirely in your browser, so your files never leave your device. The few that need a server (like Office conversions and OCR) upload over an encrypted connection and delete the file within an hour.",
+  },
+  {
+    q: "Do I need to install anything or create an account?",
+    a: "No. Everything runs in the browser — open a tool, drop your file in, and download the result. No app, no account.",
+  },
+  {
+    q: "Which tools work without uploading?",
+    a: `${TOOLS.filter((t) => t.runtime === "client").length} of the ${TOOLS.length} tools run fully in-browser, including merge, split, compress-adjacent tasks, edit, sign, fill forms, and convert to images or text.`,
+  },
+];
+
+const JSONLD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    url: SITE_URL,
+    description:
+      "Free online PDF tools that respect your privacy — most run entirely in your browser without uploading files.",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE_NAME,
+    url: SITE_URL,
+    logo: `${SITE_URL}/icon.svg`,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: HOME_FAQ.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  },
+];
 
 export default function Home() {
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-14">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSONLD) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSONLD) }}
       />
       <section className="mb-16 flex items-center justify-between gap-10">
         <div className="max-w-2xl">
@@ -120,6 +158,48 @@ export default function Home() {
           </section>
         );
       })}
+
+      <section className="mb-12">
+        <div className="mb-4 flex items-baseline gap-3">
+          <h2 className="text-lg font-semibold tracking-tight">Guides</h2>
+          <Link href="/guides" className="text-sm text-red-600 hover:underline dark:text-red-400">
+            View all →
+          </Link>
+          <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {GUIDES.slice(0, 6).map((g) => (
+            <Link
+              key={g.slug}
+              href={`/guides/${g.slug}`}
+              className="group rounded-lg border border-zinc-200 bg-white p-4 transition-all duration-150 hover:border-zinc-300 hover:shadow-[0_2px_12px_rgba(0,0,0,0.06)] focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-zinc-700"
+            >
+              <h3 className="text-sm font-semibold tracking-tight group-hover:text-red-600 dark:group-hover:text-red-400">
+                {g.heading}
+              </h3>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-4">
+        <h2 className="mb-4 text-lg font-semibold tracking-tight">
+          Frequently asked questions
+        </h2>
+        <div className="space-y-3">
+          {HOME_FAQ.map((f) => (
+            <details
+              key={f.q}
+              className="group rounded-lg border border-zinc-200 px-4 py-3 dark:border-zinc-800"
+            >
+              <summary className="cursor-pointer list-none font-medium marker:content-none">
+                {f.q}
+              </summary>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-500">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

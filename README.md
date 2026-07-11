@@ -75,6 +75,9 @@ sitemap at `/sitemap.xml`.
 - `src/lib/tools/registry.ts` — every tool is a `ToolDefinition`; the generic
   UI (upload → options → run → download) is driven entirely by these entries.
   Adding a tool = one definition + one processor function.
+- `src/lib/guides/content.ts` — data-driven how-to guides at `/guides`
+  (SEO/top-of-funnel content); each entry generates a static page with Article +
+  FAQ structured data and links to the relevant tool.
 - `src/lib/engine-client/` — pdf-lib/pdfjs implementations; pdf-lib ops run in
   a Web Worker (`src/workers/pdf.worker.ts`), rendering runs on the main thread.
 - `src/lib/engine-server/` — `execFile` wrappers for Ghostscript, qpdf,

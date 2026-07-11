@@ -89,6 +89,12 @@ export default function RootLayout({
               >
                 All tools
               </Link>
+              <Link
+                href="/guides"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                Guides
+              </Link>
               <ThemeToggle />
               <AuthNav hasProviders={hasSignIn()} />
             </nav>
