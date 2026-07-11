@@ -2,6 +2,7 @@ import {
   PDFDict,
   PDFDocument,
   PDFName,
+  PDFString,
   StandardFonts,
   degrees,
   rgb,
@@ -144,6 +145,70 @@ export const replaceImage: EngineOp = async ([file], options) => {
     }
   }
   return [pdfFile(`${baseName(file.name)}-image-replaced.pdf`, await doc.save())];
+};
+
+interface AnnotItem {
+  kind: "note" | "highlight";
+  page: number;
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
+  text?: string;
+}
+
+/**
+ * Add real PDF annotations (sticky-note comments + highlights) to /Annots.
+ * Unlike the editor's flatten path these stay live: readers show them in the
+ * comments panel and let reviewers reply, move, or delete them.
+ */
+export const annotate: EngineOp = async ([file], options) => {
+  const items = (options.items ?? []) as AnnotItem[];
+  const doc = await PDFDocument.load(file.data);
+  const { toPdfPoint, toPdfRect } = await import("./page-rotate");
+  const pages = doc.getPages();
+
+  for (const item of items) {
+    const page = pages[item.page];
+    if (!page) continue;
+    let dict;
+    if (item.kind === "note") {
+      const at = toPdfPoint(page, item.x, item.y);
+      const s = 18;
+      dict = doc.context.obj({
+        Type: "Annot",
+        Subtype: "Text",
+        Name: "Comment",
+        Open: false,
+        Rect: [at.x, at.y - s, at.x + s, at.y],
+        Contents: PDFString.of(item.text ?? ""),
+        C: [1, 0.85, 0.3],
+      });
+    } else {
+      const r = toPdfRect(page, item.x, item.y, item.w ?? 0, item.h ?? 0);
+      const x0 = r.x;
+      const y0 = r.y;
+      const x1 = r.x + r.width;
+      const y1 = r.y + r.height;
+      dict = doc.context.obj({
+        Type: "Annot",
+        Subtype: "Highlight",
+        Rect: [x0, y0, x1, y1],
+        // QuadPoints: upper-left, upper-right, lower-left, lower-right.
+        QuadPoints: [x0, y1, x1, y1, x0, y0, x1, y0],
+        C: [1, 0.92, 0.23],
+        ...(item.text ? { Contents: PDFString.of(item.text) } : {}),
+      });
+    }
+    const ref = doc.context.register(dict);
+    const existing = page.node.Annots();
+    if (existing) {
+      existing.push(ref);
+    } else {
+      page.node.set(PDFName.of("Annots"), doc.context.obj([ref]));
+    }
+  }
+  return [pdfFile(`${baseName(file.name)}-annotated.pdf`, await doc.save())];
 };
 
 export const sanitize: EngineOp = async ([file]) => {
@@ -450,6 +515,7 @@ export const PDFLIB_OPS: Record<string, EngineOp> = {
   "flatten-pdf": flattenPdf,
   "header-footer": headerFooter,
   resize,
+  annotate,
   "replace-image": replaceImage,
   // edit and sign both stamp overlay items onto the document;
   // fill-form fills AcroForm fields (also via the flatten op)

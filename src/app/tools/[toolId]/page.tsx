@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AnnotateTool } from "@/components/editor/AnnotateTool";
 import { CompareTool } from "@/components/editor/CompareTool";
 import { CropTool } from "@/components/editor/CropTool";
 import { EditTool } from "@/components/editor/EditTool";
@@ -31,6 +32,7 @@ const CUSTOM_UIS = {
   metadata: MetadataTool,
   replaceimage: ReplaceImageTool,
   visualcompare: VisualCompareTool,
+  annotate: AnnotateTool,
 } as const;
 
 export function generateStaticParams() {

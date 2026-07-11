@@ -55,7 +55,8 @@ export interface ToolDefinition {
     | "crop"
     | "metadata"
     | "replaceimage"
-    | "visualcompare";
+    | "visualcompare"
+    | "annotate";
 }
 
 export const PDF_ACCEPT: Record<string, string[]> = {

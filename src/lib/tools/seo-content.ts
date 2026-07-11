@@ -654,6 +654,28 @@ export const TOOL_SEO: Record<string, ToolSeo> = {
     related: ["n-up", "crop", "compress"],
   },
 
+  annotate: {
+    title: "Annotate PDF Online Free — Add Comments & Highlights, No Upload",
+    description:
+      "Add sticky-note comments and highlights to a PDF as real, editable annotations. Free, private, and processed in your browser.",
+    intro: [
+      "Mark up a PDF the way a reviewer would: drop sticky-note comments and drag highlights over the parts that matter. These are saved as genuine PDF annotations, so they appear in the comments panel of Acrobat, Preview, and other readers — where anyone can reply to, move, or delete them. Nothing is baked into the page, so the underlying document stays untouched.",
+      "All markup is added locally in your browser, so confidential documents never leave your device. To permanently stamp text or shapes into the page instead, use the Edit PDF tool.",
+    ],
+    faqs: [
+      {
+        q: "Are these real annotations or drawn onto the page?",
+        a: "Real PDF annotations (Text and Highlight). They live in the document's annotation layer, so readers show them as comments you can open, reply to, or remove — the page content itself isn't changed.",
+      },
+      {
+        q: "Will the comments show up in other PDF readers?",
+        a: "Yes. Text (sticky-note) and Highlight annotations are standard, so Acrobat, Preview, and most viewers display them in their comments/markup panel.",
+      },
+      { q: "Is my PDF uploaded to annotate it?", a: "No. " + PRIVATE_NOTE },
+    ],
+    related: ["edit", "compare", "sign"],
+  },
+
   "visual-compare": {
     title: "Visually Compare PDFs Online Free — Pixel Diff, No Upload",
     description:
