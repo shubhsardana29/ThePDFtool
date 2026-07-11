@@ -239,6 +239,231 @@ export const GUIDES: Guide[] = [
     toolId: "fill-form",
     related: ["fill-form", "sign", "edit"],
   },
+  {
+    slug: "convert-jpg-to-pdf",
+    title: "How to Convert JPG to PDF (Free, In Your Browser)",
+    description:
+      "Turn one or more JPG/PNG images into a single PDF — set the order and page size, all without uploading anything.",
+    heading: "How to convert JPG to PDF",
+    updated: "2026-07-11",
+    intro: [
+      "Combining photos or scanned pages into one PDF makes them far easier to send, print, or archive than a pile of loose image files. Whether it's receipts, whiteboard photos, or a scanned document, wrapping them in a single PDF keeps them in order and opens the same way on every device.",
+      "You can do it in seconds, and because it runs in your browser the images never leave your computer.",
+    ],
+    steps: [
+      { title: "Open the JPG to PDF tool", body: "Go to the JPG to PDF tool and add your images — JPG and PNG both work, and you can drop several at once." },
+      { title: "Arrange the order", body: "Put the images in the order you want them to appear as pages." },
+      { title: "Create and download", body: "Build the PDF and download it. Each image becomes one page." },
+    ],
+    faqs: [
+      { q: "Can I combine several images into one PDF?", a: "Yes — add as many as you like and each becomes a page, in the order you arrange them." },
+      { q: "Are my photos uploaded?", a: "No. The conversion runs entirely in your browser, so the images stay on your device." },
+      { q: "What about the reverse — PDF back to images?", a: "Use PDF to JPG or PDF to PNG to render each page as an image." },
+    ],
+    toolId: "images-to-pdf",
+    related: ["images-to-pdf", "pdf-to-jpg", "merge"],
+  },
+  {
+    slug: "convert-pdf-to-jpg",
+    title: "How to Convert PDF to JPG (Free, No Upload)",
+    description:
+      "Render each page of a PDF as a JPG image — pick the resolution — entirely in your browser. Free, step by step.",
+    heading: "How to convert PDF to JPG",
+    updated: "2026-07-11",
+    intro: [
+      "Sometimes you need a PDF as plain images: to drop a page into a slide, post a preview, or attach a page where PDFs aren't accepted. Converting to JPG turns every page into a standalone image you can use anywhere.",
+      "Here's how, plus a note on when PNG is the better choice.",
+    ],
+    steps: [
+      { title: "Open the PDF to JPG tool", body: "Go to the PDF to JPG tool and add your PDF." },
+      { title: "Choose a resolution", body: "Pick a DPI — 150 is a good default; use 300 for print quality or 72 for small on-screen images." },
+      { title: "Download the images", body: "Convert and download. Multi-page PDFs come back as a zip with one image per page." },
+    ],
+    sections: [
+      {
+        heading: "JPG or PNG?",
+        body: [
+          "JPG is smaller and ideal for pages with photos. PNG is lossless and keeps text and lines crisp, which is better for diagrams and screenshots — use the PDF to PNG tool for that.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Will every page become a separate image?", a: "Yes — one image per page, delivered together as a zip for multi-page files." },
+      { q: "Is my PDF uploaded?", a: "No. Rendering happens in your browser via pdf.js — nothing is uploaded." },
+      { q: "How do I get sharper output?", a: "Choose 300 DPI, or use PDF to PNG for lossless images." },
+    ],
+    toolId: "pdf-to-jpg",
+    related: ["pdf-to-jpg", "pdf-to-png", "extract-images"],
+  },
+  {
+    slug: "split-a-pdf",
+    title: "How to Split a PDF into Multiple Files (Free)",
+    description:
+      "Break one PDF into several — by page ranges or into single pages — in your browser, without uploading the file.",
+    heading: "How to split a PDF into multiple files",
+    updated: "2026-07-11",
+    intro: [
+      "A single PDF that really should be several — a scanned stack of unrelated documents, a report with chapters you want to share separately — is easy to break apart. Splitting lets you pull out page ranges into their own files without re-scanning or printing.",
+      "It runs entirely in your browser, so even sensitive documents stay on your machine.",
+    ],
+    steps: [
+      { title: "Open the Split PDF tool", body: "Go to the Split PDF tool and add your file." },
+      { title: "Enter page ranges", body: "Type ranges like “1-3, 4-6, 7” to get one file per range, or leave it empty to split every page into its own PDF." },
+      { title: "Download the parts", body: "Split and download. Multiple outputs arrive together as a zip." },
+    ],
+    faqs: [
+      { q: "Can I split into single pages?", a: "Yes — leave the ranges field empty and every page becomes its own PDF." },
+      { q: "How do I keep just a few pages instead?", a: "Use Extract pages to pull specific pages into one new document, or Delete pages to drop the ones you don't want." },
+      { q: "Is my PDF uploaded?", a: "No — splitting runs entirely in your browser." },
+    ],
+    toolId: "split",
+    related: ["split", "extract", "delete-pages"],
+  },
+  {
+    slug: "add-page-numbers-to-pdf",
+    title: "How to Add Page Numbers to a PDF (Free)",
+    description:
+      "Stamp page numbers onto a PDF — choose the position and starting number — right in your browser, no upload.",
+    heading: "How to add page numbers to a PDF",
+    updated: "2026-07-11",
+    intro: [
+      "Page numbers make a document easy to reference and look properly finished — essential for reports, contracts, and anything you'll print and hand around. If your PDF came out of a tool that didn't add them, you can stamp them on afterwards in seconds.",
+      "Here's how, including numbering that doesn't have to start at 1.",
+    ],
+    steps: [
+      { title: "Open the Page Numbers tool", body: "Go to the Page numbers tool and add your PDF." },
+      { title: "Choose position and start", body: "Pick where the number sits (e.g. bottom-center) and the starting number — handy when a cover page shouldn't count as page 1." },
+      { title: "Apply and download", body: "Stamp the numbers and download the result." },
+    ],
+    sections: [
+      {
+        heading: "Need more than a number?",
+        body: [
+          "For running text like “Confidential” or “Page 3 of 12” in a header or footer, use the Header & Footer tool, which supports {page}, {pages}, and {date} placeholders. For legal-style sequential stamps across a document set, use Bates Numbering.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Can I start numbering at a page other than 1?", a: "Yes — set the starting number, useful when a cover or title page shouldn't be counted." },
+      { q: "Can I put numbers in a header instead of the footer?", a: "Use the Header & Footer tool for top-of-page text and placeholders like “Page {page} of {pages}”." },
+      { q: "Is my PDF uploaded?", a: "No — numbering runs in your browser." },
+    ],
+    toolId: "page-numbers",
+    related: ["page-numbers", "header-footer", "bates"],
+  },
+  {
+    slug: "sign-a-pdf",
+    title: "How to Sign a PDF Electronically (Free)",
+    description:
+      "Add your signature to a PDF — draw, type, or upload it — and place it exactly where it belongs, without uploading the document.",
+    heading: "How to sign a PDF electronically",
+    updated: "2026-07-11",
+    intro: [
+      "Getting a PDF that needs your signature no longer means printing, signing, and scanning. You can add a signature on screen and place it precisely on the signature line — a clean, typed-or-drawn mark that's widely accepted for everyday agreements.",
+      "And because your signature is exactly the kind of thing you don't want floating around on someone's server, this runs entirely in your browser.",
+    ],
+    steps: [
+      { title: "Open the Sign PDF tool", body: "Go to the Sign PDF tool and add your document." },
+      { title: "Create your signature", body: "Draw it with a mouse or finger, type it in a handwriting font, or upload an image of your real signature." },
+      { title: "Place it on the page", body: "Click where it belongs and resize it to fit the line. Add it to more than one page if needed." },
+      { title: "Download the signed PDF", body: "Download the finished document — your signature and the file never left your device." },
+    ],
+    faqs: [
+      { q: "Is this a legally binding signature?", a: "It applies a visual electronic signature, which is widely accepted for everyday documents. It is not a cryptographic/qualified digital signature — for regulated cases, use a certified signing service." },
+      { q: "Can I sign in multiple places?", a: "Yes — once you've created a signature, place it as many times as you need." },
+      { q: "Is my signature uploaded?", a: "No. Both the document and the signature are processed entirely in your browser." },
+    ],
+    toolId: "sign",
+    related: ["sign", "fill-form", "edit"],
+  },
+  {
+    slug: "add-watermark-to-pdf",
+    title: "How to Add a Watermark to a PDF (Free)",
+    description:
+      "Stamp a text watermark like DRAFT or CONFIDENTIAL across every page of a PDF, in your browser, without uploading.",
+    heading: "How to add a watermark to a PDF",
+    updated: "2026-07-11",
+    intro: [
+      "A watermark signals status at a glance — DRAFT, CONFIDENTIAL, a company name — and discourages passing a document off as final or original. Adding one across every page takes moments and doesn't touch the underlying content.",
+      "Here's how to stamp a text watermark in your browser.",
+    ],
+    steps: [
+      { title: "Open the Watermark tool", body: "Go to the Watermark tool and add your PDF." },
+      { title: "Set your text and style", body: "Type the watermark text and adjust size, opacity, and whether it runs diagonally across the page." },
+      { title: "Apply and download", body: "Stamp it on every page and download the result." },
+    ],
+    faqs: [
+      { q: "Will the watermark cover my content?", a: "Lower the opacity so it sits lightly over the page — readable but not obscuring. A diagonal, semi-transparent stamp is the usual choice." },
+      { q: "Can I use an image watermark, like a logo?", a: "This tool stamps text. To place a logo, add it as an image in the Edit PDF tool." },
+      { q: "Is my PDF uploaded?", a: "No — watermarking runs in your browser." },
+    ],
+    toolId: "watermark",
+    related: ["watermark", "header-footer", "edit"],
+  },
+  {
+    slug: "password-protect-a-pdf",
+    title: "How to Password-Protect a PDF (Free)",
+    description:
+      "Encrypt a PDF with a password so only people you share it with can open it. AES-256, step by step.",
+    heading: "How to password-protect a PDF",
+    updated: "2026-07-11",
+    intro: [
+      "Before emailing anything sensitive — a bank statement, a contract, medical records — it's worth locking it so only the intended recipient can open it. Password-protecting a PDF encrypts its contents so the file is useless to anyone without the password.",
+      "Here's how, plus how to remove the password again later.",
+    ],
+    steps: [
+      { title: "Open the Protect PDF tool", body: "Go to the Protect PDF tool and add your file." },
+      { title: "Set a strong password", body: "Choose a password and share it with the recipient through a separate channel (not in the same email as the file)." },
+      { title: "Download the encrypted PDF", body: "Encrypt with AES-256 and download. Opening it will now require the password." },
+    ],
+    sections: [
+      {
+        heading: "Removing the password later",
+        body: [
+          "If you have the password and want a copy that opens freely, the Unlock PDF tool removes the encryption. To scrub metadata (author, software) before sharing, use Sanitize PDF.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "How strong is the encryption?", a: "AES-256, the current standard — strong enough that the password, not the cipher, is the weak point. Use a long, unique one." },
+      { q: "How do I remove the password later?", a: "Use Unlock PDF with the password to produce an unprotected copy." },
+      { q: "Where is the file processed?", a: "Encryption runs on the server (qpdf) over an encrypted connection; the file is deleted within an hour." },
+    ],
+    toolId: "protect",
+    related: ["protect", "unlock", "sanitize"],
+  },
+  {
+    slug: "convert-pdf-to-excel",
+    title: "How to Convert a PDF to Excel (Extract Tables)",
+    description:
+      "Pull tables out of a PDF into an Excel spreadsheet or CSV — in your browser — so you can sort and calculate the data.",
+    heading: "How to convert a PDF to Excel",
+    updated: "2026-07-11",
+    intro: [
+      "Data trapped in a PDF table — a bank statement, a price list, a report — is painful to reuse until it's back in a spreadsheet. Converting to Excel or CSV recovers the rows and columns so you can sort, filter, and calculate instead of retyping.",
+      "Here's how, and an honest note on what to expect from automatic table extraction.",
+    ],
+    steps: [
+      { title: "Open the PDF to Excel tool", body: "Go to the PDF to Excel tool and add your PDF." },
+      { title: "Pick a format", body: "Choose an Excel workbook (.xlsx, one sheet per page) or CSV files." },
+      { title: "Download and tidy", body: "Download the result and adjust any columns the detector grouped differently than you'd like." },
+    ],
+    sections: [
+      {
+        heading: "How well does it work?",
+        body: [
+          "The tool reads the PDF's text layer and groups it into rows and columns by position, in your browser. Clean, grid-like tables come across well; dense or irregular layouts may need a little cleanup. Scanned PDFs have no text layer, so run them through OCR first.",
+        ],
+      },
+    ],
+    faqs: [
+      { q: "Will it get every table perfectly?", a: "Simple tables convert cleanly; complex or merged layouts are best-effort and may need tidying. It's detecting structure from text positions, not reading a defined table." },
+      { q: "It returned nothing from a scan — why?", a: "A scan is an image with no text to read. Run it through OCR first, then convert." },
+      { q: "Is my PDF uploaded?", a: "No — extraction runs entirely in your browser." },
+    ],
+    toolId: "pdf-to-excel",
+    related: ["pdf-to-excel", "pdf-to-text", "ocr"],
+  },
 ];
 
 export function getGuide(slug: string): Guide | undefined {
